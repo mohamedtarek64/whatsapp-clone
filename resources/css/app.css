@@ -1,0 +1,9 @@
+/* -------------------------------------------- */
+/* Importamos estilos personalizados */
+@import url(components.css);
+
+/* -------------------------------------------- */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

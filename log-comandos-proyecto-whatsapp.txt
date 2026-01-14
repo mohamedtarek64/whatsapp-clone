@@ -1,0 +1,86 @@
+// Creación del proyecto Laravel 9
+curl -s https://laravel.build/whatsapp | bash
+
+// Descargamos Jetstream:
+sail composer require laravel/jetstream --dev
+
+// Instalamos Jetstream con Livewire:
+sail artisan jetstream:install livewire
+
+// Instalación de dependencias NPM y migración de la Base de Datos
+npm install
+npm run build
+php artisan migrate
+
+
+// Encender el Contenedor de Docker
+sail up
+
+// Ejecutar el servidor de Vite
+npm run dev
+
+// Instalación del Drive Pusher (Proveedor de Servicios API con WebSocket)
+sail composer require pusher/pusher-php-server
+
+// Instalar Librería "Laravel Echo" (Librería para conecarse de manera sencilla a canales WebSocket con Laravel)
+npm install --save-dev laravel-echo pusher-js
+
+// Crea las Migraciones y Modelos correspondientes
+// Con la "-m" indicamos que se creará la migración
+
+sail artisan make:model Contact -m
+sail artisan make:model Chat -m
+sail artisan make:migration create_chat_user_table
+sail artisan make:model Message -m
+sail artisan make:model DeletedMessage -m
+
+// Ejecutamos la migración eliminando las tablas existentes y luego ejecutando los Seeders
+sail artisan migrate:fresh --seed
+
+// Creamos un controlador y con "-r" le decimos a Laravel que nos cree con todos los métodos para un CRUD
+sail artisan make:controller ContactController -r
+
+// Creamos una Regla personalizada para validar el formulario "Contactos"
+sail artisan make:rule InvalidEmail
+
+// Creamos un Componente de Livewire
+sail artisan make:livewire ChatComponent
+
+// Creamos una Notificación para informar a los usuarios que se le envió un mensaje
+sail artisan make:notification NewMessage
+
+// El comando "sail artisan queue:table" crea una nueva tabla en la base de datos que se utilizará para almacenar información de las tareas en cola.
+// Esta tabla se utiliza para llevar un registro de las tareas en cola y su estado, y es necesaria para utilizar las funciones de cola de trabajo en Laravel.
+sail artisan queue:table
+
+// Ejecutamos la migración para que se cree la tabla en la base de datos
+sail artisan migrate
+
+// Iniciar servidor que detecte todas las peticiones que se agreguen en la tabla "jobs" es decir todas las peticiones que se agreguen en cola
+// Esto hará que el servidor cada vez que detecte una petición en cola, los vaya despachando, es decir, vaya ejecutando las peticiones una por una que se fueron agregando en la lista de espera.
+sail artisan queeu:work
+
+// Creamos una nueva Notificación para informar cuando el otro usuario esta escribiendo
+sail artisan make:notification UserTyping
+
+// Se elimina la cache en un proyecto en Laravel y se vuelven a cargar las configuraciones del proyecto
+sail artisan cache:clear
+
+// Creamos una nueva notificación para informar cuando se halla leido un mensaje
+sail artisan make:notification ReadMessage
+
+// Creamos un evento que se ejecutará cuando se conecte a un canal del servidor de WebSocket o Pusher
+sail artisan event:generate
+
+============================================================================================================================
+
+/* Comandos que se ejecutaron para desarrollar la API */
+
+// Creamos un nuevo Controllador de Contactos que ejecutará la API
+sail artisan make:controller ContactApiController -r
+
+// Creamos un nuevo Controllador de Chats que ejecutará la API
+sail artisan make:controller ChatApiController -r
+
+// Creamos un nuevo Controllador de Mensajes de los Chats que ejecutará la API
+sail artisan make:controller MessageApiController -r
