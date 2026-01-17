@@ -17,7 +17,7 @@ class ContactController extends Controller
      */
     public function index()
     {
-        // Se recupera todos los registros de la tabla "Contact", lo pagina y se envía el array a la vista.
+        // All records from the "Contact" table are retrieved, paginated, and the array is sent to the view.
         $contacts = auth()->user()->contacts()->paginate();
         return view('contacts.index', compact('contacts'));
     }
@@ -39,29 +39,29 @@ class ContactController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    // Almacena un nuevo contacto en la base de datos.
+    // Stores a new contact in the database.
     public function store(Request $request)
     {
 
-        // Validamos los datos enviados por HTTP desde el formulario
+        // We validate the data sent via HTTP from the form
         $request->validate([
-            'name' => 'required', // Obligatorio
+            'name' => 'required', // Mandatory
             'email' => [
-                'required',       // Obligatorio
-                'email',          // Debe tener formato de correo electrónico
-                'exists:users',   // Debe existir en la tabla de usuarios de la base de datos
-                Rule::notIn([auth()->user()->email]), // El correo electrónico no puede ser igual al correo electrónico del usuario autenticado en la aplicación
-                new InvalidEmail  // Regla Personalizada en el archivo: "app\Rules\InvalidEmail.php". Esta Regla valida que el email ingresado no pertenezca ya a un Contacto
+                'required',       // Mandatory
+                'email',          // Must have email format
+                'exists:users',   // Must exist in the users table of the database
+                Rule::notIn([auth()->user()->email]), // Email cannot be the same as the authenticated user's email
+                new InvalidEmail  // Custom Rule in the file: "app\Rules\InvalidEmail.php". This rule validates that the entered email does not already belong to a Contact
             ]
         ]);
 
-        // Se busca el usuario en la BD con el correo electronico enviado desde el formulario
+        // The user is searched for in the DB with the email sent from the form
         $user = User::where('email', $request->email)->first();
 
-        // Hace un INSERT en la tabla "Contact" con los datos obtenidos de la tabla "User" filtrado por el Correo Electrónico
+        // Makes an INSERT into the "Contact" table with the data obtained from the "User" table filtered by Email
 
         /*
-            El SQL Equivalente sería:
+            The SQL Equivalent would be:
 
             INSERT INTO contacts (name, user_id, contact_id)
             VALUES (<$request->name>, <auth()->id()>, <$user->id>)
@@ -73,21 +73,21 @@ class ContactController extends Controller
             'contact_id' => $user->id
         ]);
 
-        // flash.banner => Es una variable recervada por Jetstream para mostrar el mensaje en un componente
-        session()->flash('flash.banner', 'El contacto se ha creado correctamente');
+        // flash.banner => It's a reserved Jetstream variable to show the message in a component
+        session()->flash('flash.banner', 'The contact has been created successfully');
 
-        // flash.bannerStyle => Es una variable recervada por Jetstream para dar estilo al componente que mostrará el mensaje
-        // Existen dos opciones de estilos "success" y "danger"
+        // flash.bannerStyle => It's a reserved Jetstream variable to style the component that will show the message
+        // There are two style options "success" and "danger"
         session()->flash('flash.bannerStyle', 'success');
 
-        // Redirecciona al apartado de edición de contactos
+        // Redirects to the contact editing section
         return redirect()->route('contacts.edit', $contact);
     }
 
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  int  $contact => Recibe como parametro un ID y lo relaciona automaticamente con el modelo Contact y de este modo se obtiene todo el registro relacionado con este ID en la tabla Contact
+     * @param  int  $contact => Receives an ID as a parameter and automatically relates it to the Contact model, thus obtaining the entire record related to this ID in the Contact table
      * @return \Illuminate\Http\Response
      */
     public function edit(Contact $contact)
@@ -100,29 +100,29 @@ class ContactController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  int  $contact => Recibe como parametro un ID y lo relaciona automaticamente con el modelo Contact y de este modo se obtiene todo el registro relacionado con este ID en la tabla Contact
+     * @param  int  $contact => Receives an ID as a parameter and automatically relates it to the Contact model, thus obtaining the entire record related to this ID in the Contact table
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, Contact $contact)
     {
-        // Validamos los datos enviados por HTTP desde el formulario
+        // We validate the data sent via HTTP from the form
         $request->validate([
-            'name' => 'required', // Obligatorio
+            'name' => 'required', // Mandatory
             'email' => [
-                'required',       // Obligatorio
-                'email',          // Debe tener formato de correo electrónico
-                'exists:users',   // Debe existir en la tabla de usuarios de la base de datos
-                Rule::notIn([auth()->user()->email]), // El correo electrónico no puede ser igual al correo electrónico del usuario autenticado en la aplicación
-                new InvalidEmail($contact->user->email)  // Regla Personalizada en el archivo: "app\Rules\InvalidEmail.php". Esta Regla valida que el email ingresado no pertenezca ya a un Contacto
+                'required',       // Mandatory
+                'email',          // Must have email format
+                'exists:users',   // Must exist in the users table of the database
+                Rule::notIn([auth()->user()->email]), // Email cannot be the same as the authenticated user's email
+                new InvalidEmail($contact->user->email)  // Custom Rule in the file: "app\Rules\InvalidEmail.php". This rule validates that the entered email does not already belong to a Contact
             ]
         ]);
 
-        // Se busca el usuario en la BD con el correo electronico enviado desde el formulario
+        // The user is searched for in the DB with the email sent from the form
         $user = User::where('email', $request->email)->first();
 
-        // Hace un UPDATE en la tabla "Contacts" filtrado por el ID de Contacto
+        // Makes an UPDATE in the "Contacts" table filtered by Contact ID
         /*
-            El SQL Equivalente sería:
+            The SQL Equivalent would be:
 
             UPDATE contacts
             SET name = [$request->name],
@@ -134,43 +134,43 @@ class ContactController extends Controller
             'contact_id' => $user->id
         ]);
 
-        // flash.banner => Es una variable recervada por Jetstream para mostrar el mensaje en un componente
-        session()->flash('flash.banner', 'El contacto se actualizó correctamente');
+        // flash.banner => It's a reserved Jetstream variable to show the message in a component
+        session()->flash('flash.banner', 'The contact has been updated successfully');
 
-        // flash.bannerStyle => Es una variable recervada por Jetstream para dar estilo al componente que mostrará el mensaje
-        // Existen dos opciones de estilos "success" y "danger"
+        // flash.bannerStyle => It's a reserved Jetstream variable to style the component that will show the message
+        // There are two style options "success" and "danger"
         session()->flash('flash.bannerStyle', 'success');
 
-        // Redirecciona al apartado de edición de contactos
+        // Redirects to the contact editing section
         return redirect()->route('contacts.edit', $contact);
     }
 
     /**
      * Remove the specified resource from storage.
      *
-     * @param  int  $contact => Recibe como parametro un ID y lo relaciona automaticamente con el modelo Contact y de este modo se obtiene todo el registro relacionado con este ID en la tabla Contact
+     * @param  int  $contact => Receives an ID as a parameter and automatically relates it to the Contact model, thus obtaining the entire record related to this ID in the Contact table
      * @return \Illuminate\Http\Response
      */
     public function destroy(Contact $contact)
     {
-        // Hace un DELETE en la tabla "Contacts" filtrado por el ID de Contacto
+        // Makes a DELETE from the "Contacts" table filtered by Contact ID
 
         /*
-            El SQL Equivalente sería:
+            The SQL Equivalent would be:
 
             DELETE FROM contacts
             WHERE id = $contact->id
         */
         $contact->delete();
 
-        // flash.banner => Es una variable recervada por Jetstream para mostrar el mensaje en un componente
-        session()->flash('flash.banner', 'El contacto se eliminó correctamente');
+        // flash.banner => It's a reserved Jetstream variable to show the message in a component
+        session()->flash('flash.banner', 'The contact has been deleted successfully');
 
-        // flash.bannerStyle => Es una variable recervada por Jetstream para dar estilo al componente que mostrará el mensaje
-        // Existen dos opciones de estilos "success" y "danger"
+        // flash.bannerStyle => It's a reserved Jetstream variable to style the component that will show the message
+        // There are two style options "success" and "danger"
         session()->flash('flash.bannerStyle', 'success');
 
-        // Redirecciona al apartado de edición de contactos
+        // Redirects to the contact editing section
         return redirect()->route('contacts.index',);
     }
 }

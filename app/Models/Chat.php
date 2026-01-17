@@ -11,32 +11,32 @@ class Chat extends Model
 {
     use HasFactory;
 
-    // Atributos protegidos por laravel, donde este espera que el usuario haga el INSERT.
-    // Cada vez que se creá un campo nuevo en la tabla "chat" se debe agregar en este array.
-    // De lo contrario, se obtendrá el mensaje:
-    // SQLSTATE[HY000]: General error: 1364 Field '[NOMBRE_CAMPO]' doesn't have a default value
+    // Attributes protected by Laravel, where it expects the user to do the INSERT.
+    // Every time a new field is created in the "chat" table, it must be added to this array.
+    // Otherwise, you will get the message:
+    // SQLSTATE[HY000]: General error: 1364 Field '[FIELD_NAME]' doesn't have a default value
     protected $fillable = [
         'name', 'image_url', 'is_group'
     ];
 
     // =================================================================================================================================================
-    /* MUTADORES */
+    /* MUTATORS */
 
     public function name(): Attribute
     {
         return new Attribute(
-            // Obtiene el nombre del chat o contacto
+            // Gets the name of the chat or contact
             get: function($value){
-                // Si el chat es un grupo, devuelve el nombre del grupo
+                // If the chat is a group, returns the group name
                 if($this->is_group){
                     return $value;
                 }
-                //Sino
-                // Obtiene el usuario con el que el usuario actual tiene una conversación
+                // Otherwise
+                // Gets the user with whom the current user has a conversation
                 $user = $this->users->where('id', '!=', auth()->id())->first();
-                // Obtiene el contacto del usuario actual con el usuario encontrado
+                // Gets the current user's contact with the found user
                 $contact = auth()->user()->contacts()->where('contact_id', $user->id)->first();
-                // Si se encontró un contacto, devuelve su nombre, de lo contrario, devuelve el correo electrónico del usuario
+                // If a contact was found, returns their name, otherwise, returns the user's email
                 return $contact ? $contact->name : $user->email;
             }
         );
@@ -45,16 +45,16 @@ class Chat extends Model
     public function image(): Attribute
     {
         return new Attribute(
-            // Obtiene la imagen del chat o usuario
+            // Gets the image of the chat or user
             get: function(){
-                // Si el chat es un grupo, devuelve la URL de la imagen del grupo almacenada en el almacenamiento de Laravel
+                // If the chat is a group, returns the URL of the group image stored in Laravel storage
                 if($this->is_group){
                     return Storage::url($this->image_url);
                 }
-                // Sino
-                // Obtiene el usuario con el que el usuario actual tiene una conversación
+                // Otherwise
+                // Gets the user with whom the current user has a conversation
                 $user = $this->users->where('id', '!=', auth()->id())->first();
-                // Devuelve la URL de la imagen de perfil del usuario
+                // Returns the user's profile photo URL
                 return $user->profile_photo_url;
             }
         );
@@ -69,8 +69,8 @@ class Chat extends Model
         );
     }
 
-    // Obtiene la cantidad de mensajes de un chat que sean distinto al usuario autenticado y que el campo "is_read" sea igual a falso.
-    // Es decir, obtiene los mensajes no leidos de un chat
+    // Gets the count of messages in a chat that are not by the authenticated user and where the "is_read" field is false.
+    // That is, it gets the unread messages of a chat
     public function unreadMessages(): Attribute
     {
         return new Attribute(
@@ -84,14 +84,14 @@ class Chat extends Model
 
     public function messages()
     {
-        // hasMany() => Método que hace la relación de "Uno a Muchos"
-        //  -> Parametro => Modelo con el que se quiere relacionar
+        // hasMany() => Method that makes the "One to Many" relationship
+        //  -> Parameter => Model you want to relate with
         return $this->hasMany(Message::class);
     }
 
     public function users()
     {
-        // belongsToMany() => Método que hace la relación de "Muchos a Muchos"
+        // belongsToMany() => Method that makes the "Many to Many" relationship
         return $this->belongsToMany(User::class);
     }
 }

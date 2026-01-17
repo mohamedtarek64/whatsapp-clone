@@ -8,12 +8,12 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 /**
- * Controlador para el manejo de autenticación y usuarios.
+ * Controller for handling authentication and users.
  */
 class AuthController extends Controller
 {
     /**
-     * Crear un nuevo usuario en la base de datos.
+     * Create a new user in the database.
      *
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
@@ -41,13 +41,13 @@ class AuthController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'Usuario creado exitosamente',
+            'message' => 'User created successfully',
             'token' => $user->createToken('API TOKEN')->plainTextToken
         ], 200);
     }
 
     /**
-     * Iniciar sesión para un usuario existente.
+     * Log in for an existing user.
      *
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
@@ -69,21 +69,21 @@ class AuthController extends Controller
         if (!Auth::attempt($request->only('email', 'password'))) {
             return response()->json([
                 'status' => false,
-                'errors' => ['No autorizado']
+                'errors' => ['Unauthorized']
             ], 401);
         }
 
         $user = User::where('email', $request->email)->first();
         return response()->json([
             'status' => true,
-            'message' => 'Usuario ha iniciado sesión exitosamente',
+            'message' => 'User logged in successfully',
             'data' => $user,
             'token' => $user->createToken('API TOKEN')->plainTextToken
         ], 200);
     }
 
     /**
-     * Cerrar sesión para el usuario actual y revocar los tokens.
+     * Log out for the current user and revoke the tokens.
      *
      * @return \Illuminate\Http\JsonResponse
      */
@@ -92,7 +92,7 @@ class AuthController extends Controller
         auth()->user()->tokens()->delete();
         return response()->json([
             'status' => true,
-            'message' => 'Usuario ha cerrado sesión exitosamente',
+            'message' => 'User logged out successfully',
         ], 200);
     }
 }

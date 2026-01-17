@@ -12,7 +12,7 @@ class MessageApiController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    // Obtiene todos los mensajes de un chat
+    // Gets all messages from a chat
     public function index(Chat $chat)
     {
         $messages = $chat->messages()->get();
@@ -25,16 +25,16 @@ class MessageApiController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    // Envía un mensaje al chat
+    // Sends a message to the chat
     public function store(Request $request, Chat $chat)
     {
-        // Validamos los datos enviados por HTTP desde el formulario
+        // We validate the data sent via HTTP from the form
         $request->validate([
-            'message' => 'required' // Obligatorio
+            'message' => 'required' // Mandatory
         ]);
 
-        // Crea un nuevo mensaje en la conversación actual y asigna el autor como el usuario actual
-        // SQL Equivalente:
+        // Creates a new message in the current conversation and assigns the author as the current user
+        // SQL Equivalent:
         // INSERT INTO messages (id, body, user_id, chat_id, created_at, updated_at) VALUES (:id, :body, :user_id, :chat_id, :created_at, :updated_at)
         $chat->messages()->create([
             'body' => $request->message,
@@ -43,11 +43,11 @@ class MessageApiController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'Mensaje enviado exitosamente',
+            'message' => 'Message sent successfully',
         ], 200);
     }
 
-    // Marca como leido todos los mensajes del chat que no permanezcan al usuario autenticado.
+    // Marks as read all messages in the chat that do not belong to the authenticated user.
     public function markAsRead(Chat $chat)
     {
         $readMessages = $chat->messages()
@@ -59,11 +59,11 @@ class MessageApiController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'Mensajes leidos exitosamente',
+            'message' => 'Messages read successfully',
         ], 200);
     }
 
-    // Obtiene todos los mensajes no leidos del chat que no pertenezcan al usuario autenticado.
+    // Gets all unread messages from the chat that do not belong to the authenticated user.
     public function unreadMessages(Chat $chat)
     {
         $unreadMessages = $chat->messages()

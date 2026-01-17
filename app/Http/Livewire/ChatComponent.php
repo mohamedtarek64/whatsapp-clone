@@ -7,7 +7,7 @@ use App\Models\Contact;
 use App\Models\Message;
 use Livewire\Component;
 
-// Importamos la Libreria de Notificaciones
+// We import the Notification Library
 use Illuminate\Support\Facades\Notification;
 
 class ChatComponent extends Component
@@ -20,43 +20,43 @@ class ChatComponent extends Component
     public $bodyMessage;
     public $users;
 
-    // Método que se ejecuta antes de inicializarce el componente de livewire "ChatComponent"
-    // Inicializa la propiedad "users" como una colección/array vacia para evitar errores.
+    // Method executed before initializing the Livewire component "ChatComponent"
+    // Initializes the "users" property as an empty collection/array to avoid errors.
     public function mount(){
         $this->users = collect();
     }
     // =================================================================================================================================================
-    /* OYENTES DE LIVEWIERE*/
+    /* LIVEWIRE LISTENERS */
     // Doc: https://laravel-livewire.com/docs/2.x/events#event-listeners
 
-    // Este método se utiliza para escuchar en un canales especifico emitido por Pusher o Laravel Web Socket.
-    // Para escuchar una lista de canales se debe retornar un array con los nombres de los canales y
-    // los eventos que se van a ejecutar cuando se conecten a dicho canal.
+    // This method is used to listen on specific channels emitted by Pusher or Laravel Web Socket.
+    // To listen to a list of channels, an array must be returned with the channel names and
+    // the events that will be executed when connecting to that channel.
     public function getListeners()
     {
-        // Obtenemos el ID del usuario logedo
+        // We get the ID of the logged-in user
         $user_id = auth()->user()->id;
 
-        // Retornamos un array donde:
-        // 1er Parametro / Key del Array => Es el canal de Pusher o Laravel WebSocket por el cual se va a escuchar.
-        //                                  (Se concatena la variable "$user_id" para hacerlo dinamico para cada usuario logeado)
-        // 2do Parametro / Value del Array => Es el método que se va a ejecutar cada vez que se reciba una notificación a travez del
-        //                                    canal especificado en el 1er Parametro/Key del array.
+        // We return an array where:
+        // 1st Parameter / Array Key => It is the Pusher or Laravel WebSocket channel to listen on.
+        //                              (The "$user_id" variable is concatenated to make it dynamic for each logged-in user)
+        // 2nd Parameter / Array Value => It is the method that will be executed each time a notification is received through the
+        //                                channel specified in the 1st Parameter/Key of the array.
 
-       // Mas detalles:
-       // Sintaxis Especial: ['echo:{channel},{event}' => '{method}']
+       // More details:
+       // Special Syntax: ['echo:{channel},{event}' => '{method}']
 
-       // Tipo de Canales:
-       // - Public: No requiere autenticación
-       // - Presence: Requiere autenticación, y todos los usuarios autenticados pueden escuchar el canal (Especial para salas de chat)
-       // - Private: Requiere autenticación, solo puede escuchar el canal los usuarios conectados, pero nadie conoce la información de nadie.
+       // Channel Types:
+       // - Public: Does not require authentication
+       // - Presence: Requires authentication, and all authenticated users can listen to the channel (Special for chat rooms)
+       // - Private: Requires authentication, only connected users can listen to the channel, but no one knows anyone else's information.
 
-       // echo-notification => es un evento en tiempo real que se activa cuando se recibe una notificación.
-       // App.Models.User.{$user_id} => especifica que esta escucha es para un usuario específico, se especifica como "App.Models.User"
-       //                               y se concatena con el id del usuario autenticado.
-       // notification => Indicamos a Livewire que el evento que ejecutará una transmisión será una notificación.
-       //               Para agregar nuevos eventos se deben crear en el siguiente archivo "app\Providers\EventServiceProvider.php".
-       // render => Es el método que se ejecutará luego de recibír una transmisión mediante el evento "notification"
+       // echo-notification => is a real-time event triggered when a notification is received.
+       // App.Models.User.{$user_id} => specifies that this listener is for a specific user, specified as "App.Models.User"
+       //                               and concatenated with the authenticated user's id.
+       // notification => We indicate to Livewire that the event triggering a broadcast will be a notification.
+       //               To add new events, they must be created in the following file "app\Providers\EventServiceProvider.php".
+       // render => It is the method that will be executed after receiving a broadcast through the "notification" event
 
        //Doc: https://laravel-livewire.com/docs/2.x/laravel-echo
         return[
@@ -104,13 +104,12 @@ class ChatComponent extends Component
 
     */
 
-    // Propiedad computada que se utiliza en el buscador de contactos, en la vista podemos hacer uso de esta propiedad llamando a "$this->contacts"
+    // Computed property used in the contact search; in the view, we can use this property by calling "$this->contacts"
     public function getContactsProperty()
     {
-
-        // Obtiene los contactos filtrando por la propiedad "search" vinculado al input del buscador del chat
+        // Gets contacts filtering by the "search" property linked to the chat search input
         /*
-            El SQL equivalente de la siguiente consulta con el ORM de Laravel es:
+            The SQL equivalent of the following query with Laravel's ORM is:
 
             SELECT *
             FROM contacts
@@ -125,7 +124,7 @@ class ChatComponent extends Component
                 )
             )
 
-            Si la consulta no obtiene registros se retorna un Array vacio para evitar error con respecto a la directiva "@forelse" del frontend
+            If the query returns no records, an empty Array is returned to avoid errors with the frontend "@forelse" directive
         */
         return Contact::where('user_id', auth()->id())
                 ->when($this->search, function($query){
@@ -139,69 +138,69 @@ class ChatComponent extends Component
                 ->get() ?? [];
     }
 
-    // Propiedad computada que se utiliza al seleccionar un contacto y mostrar los mensajes existentes en el chat. , en la vista podemos hacer uso de esta propiedad llamando a "$this->messages"
+    // Computed property used when selecting a contact to show existing messages in the chat; in the view, we can use this property by calling "$this->messages"
     public function getMessagesProperty()
     {
-        // Se obtiene el listado de mensajes del chat
-        // Se utiliza $this->chat->messages()->get() en vez de $this->chat->messages, por que si utilizamos solo $this->chat->messages, este nos mostrará una instancia del chat
-        // y si usamos $this->chat->messages()->get(), ejecutará nuevamente la consulta y obtendrá la una nueva instancia del chat todo el tiempo.
+        // Gets the list of messages in the chat
+        // We use $this->chat->messages()->get() instead of $this->chat->messages, because if we only use $this->chat->messages, it will show an instance of the chat
+        // and if we use $this->chat->messages()->get(), it will execute the query again and get a new instance of the chat every time.
 
-        // $this->chat->messages()->get() es lo mismo que utilizar Messages::where('chat_id', $this->chat->id)->get()
+        // $this->chat->messages()->get() is the same as using Messages::where('chat_id', $this->chat->id)->get()
 
         return $this->chat ? $this->chat->messages()->get() : [];
     }
 
-    // Propiedad computada que se utiliza para obtener los chats ordenados de manera Descendente por el Mutador "last_message_at", es decir,
-    // los mensajes con la fecha del mensaje mas reciente se mostrarán primeros en la lista
+    // Computed property used to get chats sorted Descending by the "last_message_at" Mutator, i.e.,
+    // the messages with the most recent message date will be shown first in the list
     public function getChatsProperty()
     {
         return auth()->user()->chats()->get()->sortByDesc('last_message_at');
     }
 
-    // Propiedad computada que se utiliza para obtener el/los ID/s Usuario de/los Contacto/s el cual enviamos un mensaje
+    // Computed property used to get the User ID(s) of the Contact(s) to whom we send a message
     public function getUsersNotificationsProperty()
     {
         return $this->chat ? $this->chat->users->where('id', '!=', auth()->id()) : [];
     }
 
-    // Compara los usuarios que se encuentan activos (Los IDs de los usuarios que se encuentra dentro de $this->users)
-    // Con el usuario que se encuentra en el chat al que se ingresó.
+    // Compares users who are currently active (The IDs of users currently in $this->users)
+    // With the user in the chat that was entered.
     public function getActiveProperty(){
-        // ->contains() =>  Es un método de colección que determina si un determinado elemento está presente en la colección o no
+        // ->contains() => It is a collection method that determines if a given element is present in the collection or not
         return $this->users->contains($this->users_notifications->first()->id);
     }
     // =================================================================================================================================================
-    /* CICLO DE VIDA */
+    /* LIFE CYCLE */
 
-    // updatedBodyMessage => Utilizando la convención "update" luego el nombre de la propiedad $bodyMessage lo que hace es escuchar cuando se modifique el valor de este
-    //                       y obtener el nuevo valor por el atributo "$value".
-    // Para agregar un evento que escuche todo el tiempo si se modifica el valor de una propiedad lo que se debe hacer es:
-    //  1) Crear la propiedad en la clase
-    //  2) crear un método siguiente la siguiente convención:
-    //          update[NOMBRE_PROPIEDAD]
-    //  Ej:
+    // updatedBodyMessage => Using the "updated" convention followed by the property name $bodyMessage listens for changes to its value
+    //                       and gets the new value through the "$value" attribute.
+    // To add an event that listens all the time if a property value is modified, you must:
+    //  1) Create the property in the class
+    //  2) create a method following this convention:
+    //          updated[PROPERTY_NAME]
+    //  Ex:
     //          updatedBodyMessage
     //
-    // Tener en cuenta que el nombre de la propiedad se empieza con mayusculas
+    // Keep in mind that the property name starts with a capital letter
     public function updatedBodyMessage($value)
     {
         if($value){
-            // Utilizamos el Facade "Notification" para enviar la notificación a Pusher
-            // 1er parametro -> ID de los usuarios a notificar
-            // 2do Parametro -> Ruta y Nombre de la Clase de la notificación creada
+            // We use the "Notification" Facade to send the notification to Pusher
+            // 1st parameter -> ID of the users to notify
+            // 2nd Parameter -> Route and Name of the created notification class
             Notification::send($this->getUsersNotificationsProperty(), new \App\Notifications\UserTyping($this->chat->id));
         }
     }
 
     // =================================================================================================================================================
-    /* FUNCIONES QUE SE EJECUTAN POR UN EVENTO */
+    /* FUNCTIONS EXECUTED BY AN EVENT */
 
-    // Obtiene o Crea el Chat del Contacto que se seleccionó
+    // Gets or Creates the Chat for the selected Contact
     public function open_chat_contact(Contact $contact)
     {
 
-        // Obtiene el chat en el que el usuario actual tiene una conversación con el contacto especificado
-        /*SQL Equivalente:
+        // Gets the chat in which the current user has a conversation with the specified contact
+        /*SQL Equivalent:
 
             SELECT * FROM chats
                 INNER JOIN chat_user ON chat_user.chat_id = chats.id
@@ -217,27 +216,27 @@ class ChatComponent extends Component
         */
         $chat = auth()->user()->chats()
             ->whereHas('users', function($query) use ($contact){
-                // Filtra los chats que tienen al usuario especificado como participante
+                // Filters chats that have the specified user as a participant
                 $query->where('user_id', $contact->contact_id);
             })
-            // Solo selecciona chats que tienen exactamente dos participantes
+            // Only selects chats that have exactly two participants
             ->has('users', 2)
-            // Obtiene el primer chat que cumpla con los criterios
+            // Gets the first chat that meets the criteria
             ->first();
 
-        // Si se encontró un chat existente, lo asigna a la propiedad de la clase
+        // If an existing chat was found, it assigns it to the class property
         if($chat){
             $this->chat = $chat;
-            // Se almacena el id del chat abierto a la propiedad "chat_id" para utilizarlo en la vista
-            // mediante la directiva "@entangle('chat_id')"
+            // The ID of the open chat is stored in the "chat_id" property for use in the view
+            // using the "@entangle('chat_id')" directive
             $this->chat_id = $chat->id;
-            // Resetea el campo contactChat para mostrar la imagen y el nombre de la propiedad chat
+            // Resets the contactChat field to show the image and name from the chat property
             $this->reset('bodyMessage','contactChat', 'search');
         }else{
-            // Si no se encontró un chat existente, asigna el contacto a la propiedad de la clase
+            // If no existing chat was found, it assigns the contact to the class property
             $this->contactChat = $contact;
 
-            // Resetea el campo chat para mostrar la imagen y el nombre de la propiedad contactChat
+            // Resets the chat field to show the image and name from the contactChat property
             $this->reset('bodyMessage','chat', 'search');
         }
     }
@@ -245,62 +244,62 @@ class ChatComponent extends Component
     public function open_chat(Chat $chat)
     {
         $this->chat = $chat;
-        // Se almacena el id del chat abierto a la propiedad "chat_id" para utilizarlo en la vista
-        // mediante la directiva "@entangle('chat_id')"
+        // The ID of the open chat is stored in the "chat_id" property for use in the view
+        // using the "@entangle('chat_id')" directive
         $this->chat_id = $chat->id;
         $this->reset('contactChat', 'bodyMessage');
 
-        // Actualizamos el campo "is_read" a "true" en la base de datos
+        // We update the "is_read" field to "true" in the database
         $chat->messages()->where('user_id', '!=', auth()->id())->where('is_read', false)->update([
             'is_read' => true
         ]);
 
-        // Utilizamos el Facade "Notification" para enviar la notificación a Pusher
-        // 1er parametro -> ID de los usuarios a notificar
-        // 2do Parametro -> Ruta y Nombre de la Clase de la notificación creada (En este caso se llama "ReadMessage")
+        // We use the "Notification" Facade to send the notification to Pusher
+        // 1st parameter -> ID of the users to notify
+        // 2nd Parameter -> Route and Name of the created notification class (In this case called "ReadMessage")
         Notification::send($this->getUsersNotificationsProperty(), new \App\Notifications\ReadMessage);
     }
 
     public function sendMessage()
     {
-        // Valida que el cuerpo del mensaje no esté vacío
+        // Validates that the message body is not empty
         $this->validate([
             'bodyMessage' => 'required'
         ]);
 
-        // Si no hay una conversación existente, crea una nueva y agrega a los usuarios actuales
+        // If there is no existing conversation, creates a new one and adds the current users
         if(!$this->chat){
-            // SQL Equivalente:
+            // SQL Equivalent:
             // INSERT INTO chats (id, created_at, updated_at) VALUES (:id, :created_at, :updated_at)
             $this->chat = Chat::create();
-            // Se almacena el id del chat abierto a la propiedad "chat_id" para utilizarlo en la vista
-            // mediante la directiva "@entangle('chat_id')"
+            // The ID of the open chat is stored in the "chat_id" property for use in the view
+            // using the "@entangle('chat_id')" directive
             $this->chat_id = $this->chat->id;
 
             /*
-                El método attach en Laravel es utilizado para agregar registros a una tabla pivote de una relación de muchos a muchos.
-                En este caso, $this->chat->users() es una instancia del constructor de consultas de Laravel para la relación users en el modelo Chat.
-                El método attach toma una matriz de ID de usuarios y agrega una fila para cada uno de ellos en la tabla pivote, estableciendo la relación
-                entre el chat y el usuario especificado.
+                The attach method in Laravel is used to add records to a pivot table of a many-to- many relationship.
+                In this case, $this->chat->users() is an instance of the Laravel query builder for the users relationship on the Chat model.
+                The attach method takes an array of user IDs and adds a row for each of them in the pivot table, establishing the relationship
+                between the chat and the specified user.
 
-                Por ejemplo, si $this->chat representa un chat con ID 10 y [auth()->user()->id, $this->contactChat->contact_id] es una matriz de dos ID de usuarios,
-                attach agregaría las siguientes filas a la tabla pivote:
+                For example, if $this->chat represents a chat with ID 10 and [auth()->user()->id, $this->contactChat->contact_id] is an array of two user IDs,
+                attach would add the following rows to the pivot table:
 
                     user_id | chat_id
                     --------+--------
                     1     |   10
                     2     |   10
 
-                Esto establecería una relación entre el chat con ID 10 y los usuarios con ID 1 y 2.
+                This would establish a relationship between the chat with ID 10 and users with ID 1 and 2.
             */
 
-            // SQL Equivalente:
+            // SQL Equivalent:
             // INSERT INTO chat_user (user_id, chat_id) VALUES (:user_id, :chat_id)
             $this->chat->users()->attach([auth()->user()->id, $this->contactChat->contact_id]);
         }
 
-        // Crea un nuevo mensaje en la conversación actual y asigna el autor como el usuario actual
-        // SQL Equivalente:
+        // Creates a new message in the current conversation and assigns the author as the current user
+        // SQL Equivalent:
         // INSERT INTO messages (id, body, user_id, chat_id, created_at, updated_at) VALUES (:id, :body, :user_id, :chat_id, :created_at, :updated_at)
         $this->chat->messages()->create([
             'body' => $this->bodyMessage,
@@ -308,69 +307,69 @@ class ChatComponent extends Component
         ]);
 
 
-        // Utilizamos el Facade "Notification" para enviar la notificación a Pusher
-        // 1er parametro -> ID de los usuarios a notificar
-        // 2do Parametro -> Ruta y Nombre de la Clase de la notificación creada (En este caso se llama "NewMessage")
+        // We use the "Notification" Facade to send the notification to Pusher
+        // 1st parameter -> ID of the users to notify
+        // 2nd Parameter -> Route and Name of the created notification class (In this case called "NewMessage")
         Notification::send($this->getUsersNotificationsProperty(), new \App\Notifications\NewMessage);
 
-        // Resetea los campos de mensaje y contacto para una nueva entrada
+        // Resets the message and contact fields for a new entry
         $this->reset('bodyMessage', 'contactChat');
     }
 
-    // Función que se ejecuta en el momento que nos encontremos ubicados en la página chat
-    // $users => Obtendrá los datos del usuario retornado en el archivo "routes\channels.php" del Broadcast 'chat.{id}'
-    // en el canal con el nombre "chat.1" de tipo "presence"
+    // Function executed at the moment we are located on the chat page
+    // $users => Will get the user data returned in the "routes\channels.php" file from the 'chat.{id}' Broadcast
+    // in the channel named "chat.1" of type "presence"
     public function chatHere($users)
     {
         $this->users = collect($users)->pluck('id');
     }
 
-    // Función que se ejecuta en el momento que ingresa un nuevo usuario a la página chat
-    // $users => Obtendrá los datos del usuario retornado en el archivo "routes\channels.php" del Broadcast 'chat.{id}'
-    // en el canal con el nombre "chat.1" de tipo "presence"
+    // Function executed at the moment a new user enters the chat page
+    // $users => Will get the user data returned in the "routes\channels.php" file from the 'chat.{id}' Broadcast
+    // in the channel named "chat.1" of type "presence"
     public function chatJoining($user)
     {
-        // Si un usuario ingresó a la sala de chats se ingresa el ID de este en la propiedad "$this->users"
+        // If a user entered the chat room, their ID is added to the "$this->users" property
         $this->users->push($user['id']);
     }
 
-    // Función que se ejecuta en el momento que un usuario sale de la página chat
-    // $users => Obtendrá los datos del usuario retornado en el archivo "routes\channels.php" del Broadcast 'chat.{id}'
-    // en el canal con el nombre "chat.1" de tipo "presence"
+    // Function executed at the moment a user leaves the chat page
+    // $users => Will get the user data returned in the "routes\channels.php" file from the 'chat.{id}' Broadcast
+    // in the channel named "chat.1" of type "presence"
     public function chatLeaving($user)
     {
-        // Si un usuario salió de la sala de chats se quita el ID de este de la propiedad "this->users"
+        // If a user left the chat room, their ID is removed from the "this->users" property
         $this->users = $this->users->filter(function($id) use ($user){
-            // Recorre la propiedad "$this->users" (es una colección) y retorna un nuevo array con el ID distinto al que se le pasó como parametro
+            // Loops through the "$this->users" property (it's a collection) and returns a new array with the ID different from the one passed as a parameter
             return $id != $user['id'];
         });
     }
 
-    // Método que se ejecuta para renderizar el componente de Livewire sin recargar la página
+    // Method executed to render the Livewire component without reloading the page
     public function render()
     {
         if($this->chat){
 
-            // Actualizamos el campo "is_read" a "true" en la base de datos
+            // We update the "is_read" field to "true" in the database
             $this->chat->messages()->where('user_id', '!=', auth()->id())->where('is_read', false)->update([
                 'is_read' => true
             ]);
 
-            // Utilizamos el Facade "Notification" para enviar la notificación a Pusher
-            // 1er parametro -> ID de los usuarios a notificar
-            // 2do Parametro -> Ruta y Nombre de la Clase de la notificación creada (En este caso se llama "ReadMessage")
+            // We use the "Notification" Facade to send the notification to Pusher
+            // 1st parameter -> ID of the users to notify
+            // 2nd Parameter -> Route and Name of the created notification class (In this case called "ReadMessage")
             // Notification::send($this->getUsersNotificationsProperty(), new \App\Notifications\ReadMessage);
 
-            // Desencadena un evento personalizado en Livewire.
-            // Esto significa que cuando se ejecuta esta línea de código, Livewire detecta el evento "scrollIntoView" y
-            // ejecuta todas las funciones de escucha asociadas a ese evento.
+            // Triggers a custom Livewire event.
+            // This means that when this line of code is executed, Livewire detects the "scrollIntoView" event and
+            // executes all listener functions associated with that event.
             $this->emit('scrollIntoView');
         }
 
 
-        // view('livewire.chat-component') => Muestra la vista del componente "chat" de Livewire
-        // ->layout('[Ruta Layout]') => Se utiliza para asignar un Layouts a un componente de Livewire.
-        //      Parametro => Recibe como parametro la ruta del layout que se quiere utilizar, en este caso se utilizó "layouts.chat"
+        // view('livewire.chat-component') => Shows the Livewire "chat" component view
+        // ->layout('[Layout Route]') => Used to assign a Layout to a Livewire component.
+        //      Parameter => Receives as a parameter the route of the layout you want to use, in this case "layouts.chat" was used
         return view('livewire.chat-component')->layout('layouts.chat');
     }
 }

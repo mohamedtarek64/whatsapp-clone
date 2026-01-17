@@ -12,11 +12,11 @@
 
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
-                    {{-- :active="request()->routeIs('contacts.*')" => Verifica que nos encontremos dentro de una ruta que empiece con la palabra "contacts.".
-                                                                       Puede ser: contacts.index, contacts.show, contacts.edit, etc.
-                                                                       De esta manera marcará en que menú nos encontramos--}}
+                    {{-- :active="request()->routeIs('contacts.*')" => Verifies that we are within a route that starts with the word "contacts.".
+                                                                       Can be: contacts.index, contacts.show, contacts.edit, etc.
+                                                                       This way it will mark which menu we are in--}}
                     <x-jet-nav-link href="{{ route('contacts.index') }}" :active="request()->routeIs('contacts.*')">
-                        Contactos
+                        Contacts
                     </x-jet-nav-link>
                     <x-jet-nav-link href="{{ route('chat.index') }}" :active="request()->routeIs('chat.index')">
                         Chat
@@ -144,7 +144,7 @@
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
             <x-jet-responsive-nav-link href="{{ route('contacts.index') }}" :active="request()->routeIs('contacts.*')">
-                Contactos
+                Contacts
             </x-jet-responsive-nav-link>
             <x-jet-responsive-nav-link href="{{ route('chat.index') }}" :active="request()->routeIs('chat.index')">
                 Chat

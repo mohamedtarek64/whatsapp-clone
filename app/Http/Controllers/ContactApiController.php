@@ -41,27 +41,27 @@ class ContactApiController extends Controller
      */
     public function store(Request $request)
     {
-        // Validamos los datos enviados por HTTP desde el formulario
+        // We validate the data sent via HTTP from the form
         $request->validate([
-            'name' => 'required', // Obligatorio
+            'name' => 'required', // Mandatory
             'email' => [
-                'required',       // Obligatorio
-                'email',          // Debe tener formato de correo electrónico
-                'exists:users',   // Debe existir en la tabla de usuarios de la base de datos
-                Rule::notIn([auth()->user()->email]), // El correo electrónico no puede ser igual al correo electrónico del usuario autenticado en la aplicación
-                new InvalidEmail  // Regla Personalizada en el archivo: "app\Rules\InvalidEmail.php". Esta Regla valida que el email ingresado no pertenezca ya a un Contacto
+                'required',       // Mandatory
+                'email',          // Must have email format
+                'exists:users',   // Must exist in the users table of the database
+                Rule::notIn([auth()->user()->email]), // Email cannot be the same as the authenticated user's email
+                new InvalidEmail  // Custom Rule in the file: "app\Rules\InvalidEmail.php". This rule validates that the entered email does not already belong to a Contact
             ]
         ]);
         /* =================================================================================================================================================================== */
-        /* LOGICA QUE AGREGA UN USUARIO COMO CONTACTO */
+        /* LOGIC THAT ADDS A USER AS A CONTACT */
 
-        // Se busca el usuario en la BD con el correo electronico enviado desde el formulario
+        // The user is searched for in the DB with the email sent from the form
         $user = User::where('email', $request->email)->first();
 
-        // Hace un INSERT en la tabla "Contact" con los datos obtenidos de la tabla "User" filtrado por el Correo Electrónico
+        // Makes an INSERT into the "Contact" table with the data obtained from the "User" table filtered by Email
 
         /*
-            El SQL Equivalente sería:
+            The SQL Equivalent would be:
 
             INSERT INTO contacts (name, user_id, contact_id)
             VALUES (<$request->name>, <auth()->id()>, <$user->id>)
@@ -74,51 +74,50 @@ class ContactApiController extends Controller
         ]);
 
         /* =================================================================================================================================================================== */
-        /*LOGICA QUE CREA EL CHAT ENTRE EL USUARIO AUTENTICADO Y EL CONTACTO AGREGADO */
+        /* LOGIC THAT CREATES THE CHAT BETWEEN THE AUTHENTICATED USER AND THE ADDED CONTACT */
 
-        // Esta query obtiene el chat individual entre los dos usuarios, si existe...
+        // This query gets the individual chat between the two users, if it exists...
         $chatIndividual = DB::table('chat_user as u')
         ->join('chat_user as c', 'u.chat_id', '=', 'c.chat_id')
         ->select('u.*')
         ->where('u.user_id', auth()->id())
         ->where('c.user_id', $user->id)
         ->where(function ($query) {
-            // Agregamos una subconsulta para contar los usuarios en el chat
+            // We add a subquery to count the users in the chat
             $query->whereExists(function ($subquery) {
                 $subquery->select(DB::raw(1))
                     ->from('chat_user as uc')
                     ->whereRaw('uc.chat_id = u.chat_id')
-                    ->havingRaw('COUNT(uc.user_id) = 2'); // Verifica que haya exactamente 2 usuarios en el chat
+                    ->havingRaw('COUNT(uc.user_id) = 2'); // Verify that there are exactly 2 users in the chat
             });
         })
         ->get();
 
-        // Validamos si ya existe un chat individual entre los usuarios
-        if(count($chatIndividual) == 0){
-            // Si no existe creado un chat individual entre los usuarios, se crea uno.
+        // We validate if an individual chat already exists between the users
+            // If an individual chat between the users does not exist, one is created.
 
-            // SQL Equivalente:
+            // SQL Equivalent:
             // INSERT INTO chats (id, created_at, updated_at) VALUES (:id, :created_at, :updated_at)
             $newChat = Chat::create();
 
             /*
-                El método attach en Laravel es utilizado para agregar registros a una tabla pivote de una relación de muchos a muchos.
-                En este caso, $this->chat->users() es una instancia del constructor de consultas de Laravel para la relación users en el modelo Chat.
-                El método attach toma una matriz de ID de usuarios y agrega una fila para cada uno de ellos en la tabla pivote, estableciendo la relación
-                entre el chat y el usuario especificado.
+                The attach method in Laravel is used to add records to a pivot table of a many-to- many relationship.
+                In this case, $this->chat->users() is an instance of the Laravel query builder for the users relationship on the Chat model.
+                The attach method takes an array of user IDs and adds a row for each of them in the pivot table, establishing the relationship
+                between the chat and the specified user.
 
-                Por ejemplo, si $this->chat representa un chat con ID 10 y [auth()->user()->id, $this->contactChat->contact_id] es una matriz de dos ID de usuarios,
-                attach agregaría las siguientes filas a la tabla pivote:
+                For example, if $this->chat represents a chat with ID 10 and [auth()->user()->id, $this->contactChat->contact_id] is an array of two user IDs,
+                attach would add the following rows to the pivot table:
 
                     user_id | chat_id
                     --------+--------
                     1     |   10
                     2     |   10
 
-                Esto establecería una relación entre el chat con ID 10 y los usuarios con ID 1 y 2.
+                This would establish a relationship between the chat with ID 10 and users with ID 1 and 2.
             */
 
-            // SQL Equivalente:
+            // SQL Equivalent:
             // INSERT INTO chat_user (user_id, chat_id) VALUES (:user_id, :chat_id)
             $newChat->users()->attach([auth()->user()->id, $contact->contact_id]);
         }
@@ -126,11 +125,11 @@ class ContactApiController extends Controller
 
 
         /* =================================================================================================================================================================== */
-        /* RESPUESTA */
+        /* RESPONSE */
 
         return response()->json([
             'status' => true,
-            'message' => 'Contacto agregado exitosamente',
+            'message' => 'Contact added successfully',
         ], 200);
     }
 
@@ -168,24 +167,24 @@ class ContactApiController extends Controller
      */
     public function update(Request $request, Contact $contact)
     {
-        // Validamos los datos enviados por HTTP desde el formulario
+        // We validate the data sent via HTTP from the form
         $request->validate([
-            'name' => 'required', // Obligatorio
+            'name' => 'required', // Mandatory
             'email' => [
-                'required',       // Obligatorio
-                'email',          // Debe tener formato de correo electrónico
-                'exists:users',   // Debe existir en la tabla de usuarios de la base de datos
-                Rule::notIn([auth()->user()->email]), // El correo electrónico no puede ser igual al correo electrónico del usuario autenticado en la aplicación
-                new InvalidEmail($contact->user->email)  // Regla Personalizada en el archivo: "app\Rules\InvalidEmail.php". Esta Regla valida que el email ingresado no pertenezca ya a un Contacto
+                'required',       // Mandatory
+                'email',          // Must have email format
+                'exists:users',   // Must exist in the users table of the database
+                Rule::notIn([auth()->user()->email]), // Email cannot be the same as the authenticated user's email
+                new InvalidEmail($contact->user->email)  // Custom Rule in the file: "app\Rules\InvalidEmail.php". This rule validates that the entered email does not already belong to a Contact
             ]
         ]);
 
-        // Se busca el usuario en la BD con el correo electronico enviado desde el formulario
+        // The user is searched for in the DB with the email sent from the form
         $user = User::where('email', $request->email)->first();
 
-        // Hace un UPDATE en la tabla "Contacts" filtrado por el ID de Contacto
+        // Makes an UPDATE in the "Contacts" table filtered by Contact ID
         /*
-            El SQL Equivalente sería:
+            The SQL Equivalent would be:
 
             UPDATE contacts
             SET name = [$request->name],
@@ -199,7 +198,7 @@ class ContactApiController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'Contacto actualizado exitosamente',
+            'message' => 'Contact updated successfully',
         ], 200);
     }
 
@@ -211,10 +210,10 @@ class ContactApiController extends Controller
      */
     public function destroy(Contact $contact)
     {
-        // Hace un DELETE en la tabla "Contacts" filtrado por el ID de Contacto
+        // Makes a DELETE from the "Contacts" table filtered by Contact ID
 
         /*
-            El SQL Equivalente sería:
+            The SQL Equivalent would be:
 
             DELETE FROM contacts
             WHERE id = $contact->id
@@ -223,7 +222,7 @@ class ContactApiController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'Contacto eliminado exitosamente',
+            'message' => 'Contact deleted successfully',
         ], 200);
     }
 }

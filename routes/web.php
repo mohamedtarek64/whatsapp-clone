@@ -19,22 +19,26 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-// Route::resource() => establece un conjunto de rutas predefinidas para un recurso determinado.
-//                      Esto permite que se genere automáticamente un conjunto completo de rutas que se utilizan
-//                      comúnmente para operaciones CRUD (crear, leer, actualizar y eliminar) en un recurso determinado.
-// 1er Parametro => 1ra parte de la ruta a la cual luego se va a acceder a los métodos del CRUD. Ej: contacts/show, contacts/create, etc.
-// 2do Parametro => Controlador que debe tener los 7 métodos CRUD de manera obligaria o sino arrojará un error.
-//                  Los 7 métodos CRUD son: index, create, store, show, edit, update, destroy
+// Route::resource() => establishes a set of predefined routes for a given resource.
+//                      This allows automatically generating a full set of routes commonly used
+//                      for CRUD operations (create, read, update, and delete) on a given resource.
+// 1st Parameter => 1st part of the route which will then access the CRUD methods. Ex: contacts/show, contacts/create, etc.
+// 2nd Parameter => Controller must have the 7 CRUD methods mandatorily or else it will throw an error.
+//                  The 7 CRUD methods are: index, create, store, show, edit, update, destroy
 
-// ->names('contacts') => Se le asigna en plural el nombre de "contacts" a las rutas, es decir empezaran con la palabra "contacts".
-//                        Por ejemplo: contacts.index, contacts.show, etc.
+// ->names('contacts') => Assigns the name "contacts" in plural to the routes, meaning they will start with the word "contacts".
+//                        For example: contacts.index, contacts.show, etc.
 
-// ->except('show') => Indicamos que se tenga en cuenta todos los métodos de la clase "ContactController" menos el método "show" (Por que no lo estamos utilizando).
-//                      Este método es util cuando hayan métodos que no lo vamos a utilizar, por lo tanto no hace falta que se encuentren en el controlador.
-// 1er Parametro => El nombre del método que no se va a tener en cuenta.
+// ->except('show') => We indicate to include all methods of the "ContactController" class except the "show" method (Because we are not using it).
+//                      This method is useful when there are methods we won't use, so they don't need to be in the controller.
+// 1st Parameter => The name of the method that will not be included.
 Route::middleware('auth')->resource('contacts', ContactController::class)->names('contacts')->except('show');
 
-// Ruta que administrará el Controlador del Componente "Chat" creado con Livewire
+// Route that will manage the "Chat" Component Controller created with Livewire
 Route::get('/chat', ChatComponent::class)
     ->middleware('auth')
     ->name('chat.index');
+
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified'])->get('/dashboard', function () {
+    return view('dashboard');
+})->name('dashboard');
