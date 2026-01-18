@@ -12,7 +12,8 @@ class UserTyping extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public $chat_id;
+    public $user_name;
+    public $user_id;
 
     /**
      * Create a new notification instance.
@@ -22,6 +23,8 @@ class UserTyping extends Notification implements ShouldQueue
     public function __construct($chat_id)
     {
         $this->chat_id = $chat_id;
+        $this->user_name = auth()->user()->name;
+        $this->user_id = auth()->id();
     }
 
     /**
@@ -36,20 +39,6 @@ class UserTyping extends Notification implements ShouldQueue
     }
 
     /**
-     * Get the mail representation of the notification.
-     *
-     * @param  mixed  $notifiable
-     * @return \Illuminate\Notifications\Messages\MailMessage
-     */
-    public function toMail($notifiable)
-    {
-        return (new MailMessage)
-                    ->line('The introduction to the notification.')
-                    ->action('Notification Action', url('/'))
-                    ->line('Thank you for using our application!');
-    }
-
-    /**
      * Get the array representation of the notification.
      *
      * @param  mixed  $notifiable
@@ -58,15 +47,19 @@ class UserTyping extends Notification implements ShouldQueue
     public function toArray($notifiable)
     {
         return [
-            //
+            'chat_id' => $this->chat_id,
+            'user_id' => $this->user_id,
+            'user_name' => $this->user_name,
         ];
     }
 
-    // Notifica a Pusher o Laravel WebSocket (La tecnología que se utiliza para notificar en tiempo real)
+    // Notifies Pusher or Laravel WebSocket (The technology used to notify in real time)
     public function toBroadcast($notifiable)
     {
         return new BroadcastMessage([
-            'chat_id' => $this->chat_id
+            'chat_id' => $this->chat_id,
+            'user_id' => $this->user_id,
+            'user_name' => $this->user_name,
         ]);
     }
 }

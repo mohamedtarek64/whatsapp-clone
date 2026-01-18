@@ -4,12 +4,12 @@ namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-// Importamos la clase "BroadcastMessage"
+// We import the "BroadcastMessage" class
 use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-// Implementamos "ShouldQueue" a la clase
+// We implement "ShouldQueue" to the class
 class ReadMessage extends Notification  implements ShouldQueue
 {
     use Queueable;
@@ -32,7 +32,7 @@ class ReadMessage extends Notification  implements ShouldQueue
      */
     public function via($notifiable)
     {
-        // Definimos que la via será "broadcast"
+        // We define that the channel will be "broadcast"
         return ['broadcast'];
     }
 
@@ -63,7 +63,7 @@ class ReadMessage extends Notification  implements ShouldQueue
         ];
     }
 
-    // Notifica a Pusher o Laravel WebSocket (La tecnología que se utiliza para notificar en tiempo real)
+    // Notifies Pusher or Laravel WebSocket (The technology used to notify in real time)
     public function toBroadcast($notifiable)
     {
         return new BroadcastMessage([]);

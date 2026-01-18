@@ -27,6 +27,9 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'last_seen_at',
+        'chat_wallpaper',
+        'dark_mode',
     ];
 
     /**
@@ -48,6 +51,7 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'last_seen_at' => 'datetime',
     ];
 
     /**
@@ -81,7 +85,17 @@ class User extends Authenticatable
         //                 (Ya que si no se especifica estos, la consulta solo devolverá los ID's que se relacionan)
         // ->withTimestamps() => Almacena la hora y fecha de la creación y actualización del registro.
         return $this->belongsToMany(Chat::class)
-                    ->withPivot('color', 'active')
+                    ->withPivot('color', 'active', 'is_pinned', 'muted_until', 'is_archived', 'is_admin')
                     ->withTimestamps();
+    }
+
+    public function stories()
+    {
+        return $this->hasMany(Story::class);
+    }
+
+    public function activeStories()
+    {
+        return $this->hasMany(Story::class)->active();
     }
 }

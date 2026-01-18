@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            Contactos
+            Contacts
         </h2>
     </x-slot>
 
@@ -15,7 +15,7 @@
             </a>
         </div> --}}
 
-        {{-- Si el usuario logeado tiene Contactos Mostramos la Lista, Sino mostramos el Alet --}}
+        {{-- If the logged-in user has Contacts, we show the list, otherwise we show the alert --}}
         @if ($contacts->count())
 
         <div class="overflow-x-auto relative shadow-md sm:rounded-lg">
@@ -23,7 +23,7 @@
                 <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                     <tr>
                         <th scope="col" class="py-3 px-6">
-                            Nombre
+                            Name
                         </th>
                         <th scope="col" class="py-3 px-6">
                             Email
@@ -51,8 +51,8 @@
                         <td class="py-4 px-6">
                             <div class="flex space-x-2 justify-end">
                                 {{--
-                                    Redireccionamos al formulario de edición y el registro entero del contacto, en el cual Laravel tomará en automatico el ID del Contacto
-                                    para redireccionar a "http://localhost/contacts/{{$contact->id}}}/edit"
+                                    We redirect to the editing form and the entire contact record, where Laravel will automatically take the Contact ID
+                                    to redirect to "http://localhost/contacts/{{$contact->id}}}/edit"
                                 --}}
                                 <a href="{{ route('contacts.edit', $contact) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg inline-flex items-center">
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -61,13 +61,13 @@
                                 </a>
 
                                 <form action="{{ route('contacts.destroy', $contact) }}" method="POST">
-                                    {{-- La directiva @csrf genera un token de seguridad que se envía junto con cada solicitud POST a la aplicación,
-                                        y el servidor verifica que este token sea válido antes de procesar la solicitud. De esta manera, se asegura que
-                                        todas las solicitudes POST enviadas a la aplicación provengan de una fuente confiable y autorizada. --}}
+                                    {{-- The @csrf directive generates a security token sent with each POST request to the application,
+                                        and the server verifies its validity before processing the request. This ensures that
+                                        all POST requests sent to the application come from a trusted and authorized source. --}}
                                     @csrf
 
-                                    {{-- como es un formulario de actualización de registro se utiliza el Método "PUT" con esta directiva de Laravel,
-                                        ya que el atributo "method" de HTML acepta "GET" y "POST" --}}
+                                    {{-- as it is a record deletion form, the "DELETE" Method is used with this Laravel directive,
+                                        since the HTML "method" attribute only accepts "GET" and "POST" --}}
                                     @method('DELETE')
                                     <button type="submit" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg inline-flex items-center">
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
@@ -95,14 +95,14 @@
 
                 <div class="w-full px-4 py-2 -mx-3 flex justify-between">
                     <div class="mx-3">
-                        <span class="font-semibold text-blue-500 dark:text-blue-400">Ups!!!</span>
-                        <p class="text-sm text-gray-600 dark:text-gray-200">Usted no tiene contactos</p>
+                        <span class="font-semibold text-blue-500 dark:text-blue-400">Oops!!!</span>
+                        <p class="text-sm text-gray-600 dark:text-gray-200">You have no contacts</p>
                     </div>
 
                 </div>
 
                 <a href="{{ route('contacts.create') }}" class="flex items-center justify-center w-1/2 btn-blue p-2">
-                    Agregar Contacto
+                    Add Contact
                 </a>
             </div>
         @endif

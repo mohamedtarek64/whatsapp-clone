@@ -22,34 +22,34 @@ use Illuminate\Support\Facades\Route;
 //     return $request->user();
 // });
 
-// Rutas para la gestión de Usuarios
-// Se definen las rutas que no estarán protegidas por Sanctum, ya que no son requeridas.
-// En esta instancia recien se obtendrá el API TOKEN para poder acceder a las rutas protegidas por Sanctum.
+// Routes for User management
+// Routes that will not be protected by Sanctum are defined, as they are not required.
+// In this instance the API TOKEN will be obtained to access the routes protected by Sanctum.
 Route::post('auth/register',[AuthController::class, 'create']);
 Route::post('auth/login',[AuthController::class, 'login']);
 
-// Se utiliza el "middleware" de Sanctum para proteger las rutas.
-// Se necesitará el API TOKEN para poder acceder a las rutas protegidas por el middleware de Sanctum.
+// Sanctum "middleware" is used to protect routes.
+// The API TOKEN will be needed to access the routes protected by the Sanctum middleware.
 Route::middleware(['auth:sanctum'])->group(function(){
 
-    // Rutas para la gestión de Contactos
-    // La función Route::resource es un método que crea automáticamente las rutas comunes
-    // para realizar operaciones CRUD (Create, Read, Update, Delete) en el recurso especificado.
+    // Routes for Contact management
+    // The Route::resource function is a method that automatically creates common routes
+    // to perform CRUD (Create, Read, Update, Delete) operations on the specified resource.
     Route::resource('contacts', ContactApiController::class);
 
-    // Rutas para las acciones del chat.
-    // Obtiene todos los chats del usuario autenticado.
-    // Al tener el método __invoke en la classe ChatApiController, podemos hacer uso de esta sintaxis, ya que siempre se va a ejecutar el método __invoke
+    // Routes for chat actions.
+    // Gets all chats of the authenticated user.
+    // By having the __invoke method in the ChatApiController class, we can use this syntax, as the __invoke method will always be executed
     Route::get('/chats', ChatApiController::class);
 
-    // Rutas para las acciones de los mensajes del chat.
-    // Obtiene todos los mensajes de un chat específico.
+    // Routes for chat message actions.
+    // Gets all messages from a specific chat.
     Route::get('/chats/{chat}/messages', [MessageApiController::class, 'index']);
-    // Enviar un nuevo mensaje a un chat específico.
+    // Send a new message to a specific chat.
     Route::post('/chats/{chat}/messages', [MessageApiController::class, 'store']);
-    // Actualiza todos los mensajes sin leer de un chat especifico a leídos.
+    // Updates all unread messages of a specific chat to read.
     Route::patch('/chats/{chat}/messages/read', [MessageApiController::class, 'markAsRead']);
-    // Obtiene todos los mensajes no leídos de un chat específico.
+    // Gets all unread messages of a specific chat.
     Route::get('/chats/{chat}/messages/unread', [MessageApiController::class, 'unreadMessages']);
 });
 

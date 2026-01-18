@@ -4,12 +4,12 @@ namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-// Importamos la clase "BroadcastMessage"
+// We import the "BroadcastMessage" class
 use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-// Implementamos "ShouldQueue" a la clase
+// We implement "ShouldQueue" to the class
 class NewMessage extends Notification implements ShouldQueue
 {
     use Queueable;
@@ -19,9 +19,18 @@ class NewMessage extends Notification implements ShouldQueue
      *
      * @return void
      */
-    public function __construct()
+    public $chat;
+    public $message;
+
+    /**
+     * Create a new notification instance.
+     *
+     * @return void
+     */
+    public function __construct($chat, $message)
     {
-        //
+        $this->chat = $chat;
+        $this->message = $message;
     }
 
     /**
@@ -32,7 +41,7 @@ class NewMessage extends Notification implements ShouldQueue
      */
     public function via($notifiable)
     {
-        // Definimos que la via será "broadcast"
+        // We define that the channel will be "broadcast"
         return ['broadcast'];
     }
 
@@ -59,13 +68,17 @@ class NewMessage extends Notification implements ShouldQueue
     public function toArray($notifiable)
     {
         return [
-            //
+            'chat_id' => $this->chat->id,
+            'message_id' => $this->message->id,
         ];
     }
 
-    // Notifica a Pusher o Laravel WebSocket (La tecnología que se utiliza para notificar en tiempo real)
+    // Notifies Pusher or Laravel WebSocket (The technology used to notify in real time)
     public function toBroadcast($notifiable)
     {
-        return new BroadcastMessage([]);
+        return new BroadcastMessage([
+            'chat_id' => $this->chat->id,
+            'message' => $this->message,
+        ]);
     }
 }

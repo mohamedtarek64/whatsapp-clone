@@ -11,18 +11,18 @@ class InvalidEmail implements Rule
     public $email;
 
     /**
-     * Crear una nueva instancia de regla.
+     * Create a new rule instance.
      *
      * @return void
      */
     public function __construct($email = null)
     {
-        // Se define este atributo para validar que se permitan una actualización con el email ya asignado al contacto
+        // This attribute is defined to validate that an update is allowed with the email already assigned to the contact
         $this->email = $email;
     }
 
     /**
-     * Determinar si la regla de validación pasa.
+     * Determine if the validation rule passes.
      *
      * @param  string  $attribute
      * @param  mixed  $value
@@ -30,22 +30,22 @@ class InvalidEmail implements Rule
      */
     public function passes($attribute, $value)
     {
-        // Validamos si el "email" ya lo tiene otro Contacto, si ya lo tiene se retorna "false", sino "true"
+        // We validate if the "email" is already held by another Contact, if it is held "false" is returned, otherwise "true"
         /*
-            where() => se utiliza para especificar las condiciones que deben cumplirse para que un resultado sea incluido en la consulta.
-                        En este caso, se está buscando un contacto que tenga una propiedad user_id igual al id del usuario autenticado.
+            where() => used to specify the conditions that must be met for a result to be included in the query.
+                        In this case, it's searching for a contact that has a user_id property equal to the id of the authenticated user.
 
-            whereHas() => se utiliza para especificar una condición adicional en la consulta basada en la relación de un modelo con otro.
-                            En este caso, se está verificando si el contacto encontrado tiene un usuario asociado que tenga un correo electrónico específico. Esta función acepta una función de callback como argumento, que a su vez acepta una consulta como argumento. La función de callback es utilizada para agregar una condición adicional a la consulta original, en este caso verificando si el correo electrónico del usuario asociado coincide con el valor especificado.
+            whereHas() => used to specify an additional condition in the query based on the relationship of one model with another.
+                            In this case, it's checking if the found contact has an associated user that has a specific email. This function accepts a callback function as an argument, which in turn accepts a query as an argument. The callback function is used to add an additional condition to the original query, in this case checking if the associated user's email matches the specified value.
 
-            count() => se utiliza para contar cuántos resultados cumplen con las condiciones especificadas en la consulta.
-                        Si el resultado de esta función es igual a cero, entonces se devuelve true, lo que indica que no hay ningún contacto que cumpla con
-                        las condiciones especificadas en la consulta. De lo contrario, se devuelve false, lo que indica que sí hay al menos un contacto que
-                        cumple con las condiciones.
+            count() => used to count how many results meet the conditions specified in the query.
+                        If the result of this function is equal to zero, then true is returned, indicating that there is no contact that meets the
+                        conditions specified in the query. Otherwise, false is returned, indicating that there is at least one contact that
+                        meets the conditions.
         */
 
         /*
-            El SQL Equivalente sería:
+            The SQL Equivalent would be:
 
             SELECT COUNT(*)
                 FROM contacts
@@ -58,24 +58,24 @@ class InvalidEmail implements Rule
                             AND  ( email != [$this->email] OR email IS NULL )
                         )
         */
-        return Contact::where('user_id', auth()->id()) // En la tabla "Contacts" se filtra por el campo "user_id"
-                        ->whereHas('user', function($query) use ($value){ // En una subquery se hace referencia a la tabla "user"
-                            $query->where('email', $value) // Se filtra por el campo "email" de la tabla "user"
-                                ->when($this->email, function($query){ // Se agrega la condición que solo se ejecute la query cuando el parametro "$this->email" sea distinto de NULL
-                                    $query->where('email', '!=', $this->email); // Se filtra por el campo "email" en la tabla "user" y se le indica que obtenga los registros distinto al parametro "$this->email"
+        return Contact::where('user_id', auth()->id()) // In the "Contacts" table it filters by the "user_id" field
+                        ->whereHas('user', function($query) use ($value){ // In a subquery it references the "user" table
+                            $query->where('email', $value) // It filters by the "email" field of the "user" table
+                                ->when($this->email, function($query){ // The condition is added that the query only executes when the "$this->email" parameter is different from NULL
+                                    $query->where('email', '!=', $this->email); // It filters by the "email" field in the "user" table and tells it to get the records different from the "$this->email" parameter
                                 });
                         })->count() === 0;
     }
 
     /**
-     * Obtener el mensaje de error de validación.
+     * Get the validation error message.
      *
      * @return string
      */
 
-    // Aqui irá el mensaje de validación en el casó que no se cumpla la condición del método "passes"
+    // Here will be the validation message in case the "passes" method condition is not met
     public function message()
     {
-        return 'El correo electronico ingresado, ya se encuentra registrado.';
+        return 'The entered email is already registered.';
     }
 }

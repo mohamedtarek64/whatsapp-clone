@@ -8,4 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 class DeletedMessage extends Model
 {
     use HasFactory;
+
+    protected $fillable = ['user_id', 'message_id'];
 }

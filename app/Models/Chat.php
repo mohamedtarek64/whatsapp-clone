@@ -16,27 +16,38 @@ class Chat extends Model
     // Otherwise, you will get the message:
     // SQLSTATE[HY000]: General error: 1364 Field '[FIELD_NAME]' doesn't have a default value
     protected $fillable = [
-        'name', 'image_url', 'is_group'
+        'name', 'image_url', 'is_group', 'last_message_at'
     ];
+
+    protected $casts = [
+        'last_message_at' => 'datetime',
+        'is_group' => 'boolean',
+    ];
+
+    public function otherUser(): Attribute
+    {
+        return Attribute::make(
+            get: fn() => $this->is_group ? null : $this->users->where('id', '!=', auth()->id())->first()
+        );
+    }
 
     // =================================================================================================================================================
     /* MUTATORS */
 
     public function name(): Attribute
     {
-        return new Attribute(
-            // Gets the name of the chat or contact
+        return Attribute::make(
             get: function($value){
-                // If the chat is a group, returns the group name
                 if($this->is_group){
                     return $value;
                 }
-                // Otherwise
-                // Gets the user with whom the current user has a conversation
                 $user = $this->users->where('id', '!=', auth()->id())->first();
-                // Gets the current user's contact with the found user
+
+                if (!$user) {
+                    return $value ?? 'Chat';
+                }
+
                 $contact = auth()->user()->contacts()->where('contact_id', $user->id)->first();
-                // If a contact was found, returns their name, otherwise, returns the user's email
                 return $contact ? $contact->name : $user->email;
             }
         );
@@ -44,17 +55,17 @@ class Chat extends Model
 
     public function image(): Attribute
     {
-        return new Attribute(
-            // Gets the image of the chat or user
+        return Attribute::make(
             get: function(){
-                // If the chat is a group, returns the URL of the group image stored in Laravel storage
                 if($this->is_group){
-                    return Storage::url($this->image_url);
+                    return $this->image_url ? Storage::url($this->image_url) : 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&color=7F9CF5&background=EBF4FF';
                 }
-                // Otherwise
-                // Gets the user with whom the current user has a conversation
                 $user = $this->users->where('id', '!=', auth()->id())->first();
-                // Returns the user's profile photo URL
+
+                if (!$user) {
+                    return 'https://via.placeholder.com/150';
+                }
+
                 return $user->profile_photo_url;
             }
         );
@@ -62,9 +73,9 @@ class Chat extends Model
 
     public function lastMessageAt(): Attribute
     {
-        return new Attribute(
+        return Attribute::make(
             get: function(){
-                return $this->messages->last()->created_at;
+                return $this->messages->last() ? $this->messages->last()->created_at : $this->created_at;
             }
         );
     }
@@ -73,7 +84,7 @@ class Chat extends Model
     // That is, it gets the unread messages of a chat
     public function unreadMessages(): Attribute
     {
-        return new Attribute(
+        return Attribute::make(
             get: function(){
                 return $this->messages()->where('user_id', '!=', auth()->id())->where('is_read', false)->count();
             }
@@ -81,6 +92,7 @@ class Chat extends Model
     }
 
     // =================================================================================================================================================
+
 
     public function messages()
     {
@@ -92,6 +104,6 @@ class Chat extends Model
     public function users()
     {
         // belongsToMany() => Method that makes the "Many to Many" relationship
-        return $this->belongsToMany(User::class);
+        return $this->belongsToMany(User::class)->withPivot('is_pinned', 'muted_until', 'is_archived', 'is_admin')->withTimestamps();
     }
 }
