@@ -2,76 +2,109 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreMessageRequest;
+use App\Http\Resources\MessageResource;
 use App\Models\Chat;
+use App\Services\MessageService;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 
 class MessageApiController extends Controller
 {
+    use ApiResponse;
+
+    public function __construct(private MessageService $messageService)
+    {
+    }
+
     /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
+     * Display all messages from a chat
      */
-    // Gets all messages from a chat
     public function index(Chat $chat)
     {
-        $messages = $chat->messages()->get();
-        return response()->json($messages);
+        $this->authorize('view', $chat);
+
+        $messages = $chat->messages()
+            ->withRelations()
+            ->visibleToUser()
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+
+        return $this->paginated(
+            $messages,
+            'Messages retrieved successfully'
+        );
     }
 
     /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * Store a newly created message
      */
-    // Sends a message to the chat
-    public function store(Request $request, Chat $chat)
+    public function store(StoreMessageRequest $request, Chat $chat)
     {
-        // We validate the data sent via HTTP from the form
-        $request->validate([
-            'message' => 'required' // Mandatory
-        ]);
+        $this->authorize('sendMessage', $chat);
 
-        // Creates a new message in the current conversation and assigns the author as the current user
-        // SQL Equivalent:
-        // INSERT INTO messages (id, body, user_id, chat_id, created_at, updated_at) VALUES (:id, :body, :user_id, :chat_id, :created_at, :updated_at)
-        $chat->messages()->create([
-            'body' => $request->message,
-            'user_id' => auth()->user()->id
-        ]);
+        try {
+            $message = $this->messageService->sendMessage(
+                $chat,
+                $request->validated()['message']
+            );
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Message sent successfully',
-        ], 200);
+            return $this->success(
+                new MessageResource($message),
+                'Message sent successfully',
+                201
+            );
+        } catch (\Exception $e) {
+            return $this->error(
+                'Failed to send message',
+                500,
+                ['error' => $e->getMessage()]
+            );
+        }
     }
 
-    // Marks as read all messages in the chat that do not belong to the authenticated user.
+    /**
+     * Mark all messages in chat as read
+     */
     public function markAsRead(Chat $chat)
     {
-        $readMessages = $chat->messages()
-        ->where('user_id', '!=', auth()->id())
-        ->where('is_read', '=', false )
-        ->update([
-            'is_read' => true
-        ]);
+        $this->authorize('view', $chat);
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Messages read successfully',
-        ], 200);
+        try {
+            $chat->messages()
+                ->unread()
+                ->update(['is_read' => true]);
+
+            return $this->success(
+                null,
+                'Messages marked as read successfully'
+            );
+        } catch (\Exception $e) {
+            return $this->error(
+                'Failed to mark messages as read',
+                500,
+                ['error' => $e->getMessage()]
+            );
+        }
     }
 
-    // Gets all unread messages from the chat that do not belong to the authenticated user.
+    /**
+     * Get unread messages from chat
+     */
     public function unreadMessages(Chat $chat)
     {
-        $unreadMessages = $chat->messages()
-        ->where('user_id', '!=', auth()->id())
-        ->where('is_read', '=', false )
-        ->orderBy('created_at', 'desc')
-        ->get();
-        return response()->json($unreadMessages);
-    }
+        $this->authorize('view', $chat);
 
+        $unreadMessages = $chat->messages()
+            ->unread()
+            ->withRelations()
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return $this->success(
+            MessageResource::collection($unreadMessages),
+            'Unread messages retrieved successfully'
+        );
+    }
 }
+

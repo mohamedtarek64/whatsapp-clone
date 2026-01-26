@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Http\Requests\LoginRequest;
+use App\Http\Requests\RegisterRequest;
+use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Traits\ApiResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
@@ -12,87 +15,81 @@ use Illuminate\Support\Facades\Hash;
  */
 class AuthController extends Controller
 {
+    use ApiResponse;
+
     /**
-     * Create a new user in the database.
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * Register a new user.
      */
-    public function create(Request $request)
+    public function create(RegisterRequest $request)
     {
-        $rules = [
-            'name' => 'required|string|max:100',
-            'email' => 'required|string|email|max:100|unique:users',
-            'password' => 'required|string|min:8'
-        ];
-        $validator = \Validator::make($request->input(), $rules);
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'errors' => $validator->errors()->all()
-            ], 400);
+        try {
+            $user = User::create([
+                'name' => $request->validated()['name'],
+                'email' => $request->validated()['email'],
+                'password' => Hash::make($request->validated()['password']),
+            ]);
+
+            $token = $user->createToken('API TOKEN')->plainTextToken;
+
+            return $this->success(
+                [
+                    'user' => new UserResource($user),
+                    'token' => $token,
+                ],
+                'User registered successfully',
+                201
+            );
+        } catch (\Exception $e) {
+            return $this->error(
+                'Registration failed',
+                500,
+                ['error' => $e->getMessage()]
+            );
         }
-
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password)
-        ]);
-
-        return response()->json([
-            'status' => true,
-            'message' => 'User created successfully',
-            'token' => $user->createToken('API TOKEN')->plainTextToken
-        ], 200);
     }
 
     /**
-     * Log in for an existing user.
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * Login a user.
      */
-    public function login(Request $request)
+    public function login(LoginRequest $request)
     {
-        $rules = [
-            'email' => 'required|string|email|max:100',
-            'password' => 'required|string'
-        ];
-        $validator = \Validator::make($request->input(), $rules);
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'errors' => $validator->errors()->all()
-            ], 400);
+        if (!Auth::attempt($request->validated())) {
+            return $this->error(
+                'Invalid email or password',
+                401
+            );
         }
 
-        if (!Auth::attempt($request->only('email', 'password'))) {
-            return response()->json([
-                'status' => false,
-                'errors' => ['Unauthorized']
-            ], 401);
-        }
+        $user = User::where('email', $request->validated()['email'])->first();
+        $token = $user->createToken('API TOKEN')->plainTextToken;
 
-        $user = User::where('email', $request->email)->first();
-        return response()->json([
-            'status' => true,
-            'message' => 'User logged in successfully',
-            'data' => $user,
-            'token' => $user->createToken('API TOKEN')->plainTextToken
-        ], 200);
+        return $this->success(
+            [
+                'user' => new UserResource($user),
+                'token' => $token,
+            ],
+            'User logged in successfully'
+        );
     }
 
     /**
-     * Log out for the current user and revoke the tokens.
-     *
-     * @return \Illuminate\Http\JsonResponse
+     * Logout the current user.
      */
     public function logout()
     {
-        auth()->user()->tokens()->delete();
-        return response()->json([
-            'status' => true,
-            'message' => 'User logged out successfully',
-        ], 200);
+        try {
+            auth()->user()->tokens()->delete();
+
+            return $this->success(
+                null,
+                'User logged out successfully'
+            );
+        } catch (\Exception $e) {
+            return $this->error(
+                'Logout failed',
+                500,
+                ['error' => $e->getMessage()]
+            );
+        }
     }
 }

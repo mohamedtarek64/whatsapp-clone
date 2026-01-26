@@ -2,22 +2,28 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\ChatResource;
 use App\Models\Chat;
-use Illuminate\Http\Request;
+use App\Traits\ApiResponse;
 
 class ChatApiController extends Controller
 {
+    use ApiResponse;
+
     /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
+     * Display all chats for the authenticated user
      */
-    // __invoke => Method that executes when the class is invoked
     public function __invoke()
     {
-        // Gets all chats that have at least 1 message.
-        // $chats = auth()->user()->chats()->has('messages')->get();
-        $chats = auth()->user()->chats()->has('messages')->get();
-        return response()->json($chats);
+        $chats = auth()->user()->chats()
+            ->has('messages')
+            ->withRelations()
+            ->latest('last_message_at')
+            ->paginate(20);
+
+        return $this->paginated(
+            $chats,
+            'Chats retrieved successfully'
+        );
     }
 }
