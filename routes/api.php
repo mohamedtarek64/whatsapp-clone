@@ -25,12 +25,17 @@ use Illuminate\Support\Facades\Route;
 // Routes for User management
 // Routes that will not be protected by Sanctum are defined, as they are not required.
 // In this instance the API TOKEN will be obtained to access the routes protected by Sanctum.
-Route::post('auth/register',[AuthController::class, 'create']);
-Route::post('auth/login',[AuthController::class, 'login']);
+Route::middleware('throttle:auth')->group(function () {
+    Route::post('auth/register',[AuthController::class, 'create']);
+    Route::post('auth/login',[AuthController::class, 'login']);
+});
 
 // Sanctum "middleware" is used to protect routes.
 // The API TOKEN will be needed to access the routes protected by the Sanctum middleware.
-Route::middleware(['auth:sanctum'])->group(function(){
+Route::middleware(['auth:sanctum', 'throttle:api'])->group(function(){
+
+    // Auth routes
+    Route::post('auth/logout', [AuthController::class, 'logout']);
 
     // Routes for Contact management
     // The Route::resource function is a method that automatically creates common routes
