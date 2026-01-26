@@ -9,6 +9,33 @@ class Message extends Model
 {
     use HasFactory;
 
+    /**
+     * Scope to eager load relations
+     */
+    public function scopeWithRelations($query)
+    {
+        return $query->with(['user', 'parent.user', 'reactions.user', 'chat']);
+    }
+
+    /**
+     * Scope to exclude deleted messages for user
+     */
+    public function scopeVisibleToUser($query, $userId = null)
+    {
+        $userId = $userId ?? auth()->id();
+        return $query->whereDoesntHave('deletedByUsers', function ($q) use ($userId) {
+            $q->where('user_id', $userId);
+        });
+    }
+
+    /**
+     * Scope to get unread messages
+     */
+    public function scopeUnread($query)
+    {
+        return $query->where('is_read', false)->where('user_id', '!=', auth()->id());
+    }
+
     // Attributes protected by Laravel, where it expects the user to do the INSERT.
     // Every time a new field is created in the "messages" table, it must be added to this array.
     // Otherwise, you will get the message:

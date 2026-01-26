@@ -11,6 +11,25 @@ class Chat extends Model
 {
     use HasFactory;
 
+    /**
+     * Scope to load eager relations for performance optimization
+     */
+    public function scopeWithRelations($query)
+    {
+        return $query->with(['users', 'messages.user', 'messages.reactions.user']);
+    }
+
+    /**
+     * Scope to get chats for authenticated user
+     */
+    public function scopeForUser($query, $userId = null)
+    {
+        $userId = $userId ?? auth()->id();
+        return $query->whereHas('users', function ($q) use ($userId) {
+            $q->where('user_id', $userId);
+        });
+    }
+
     // Attributes protected by Laravel, where it expects the user to do the INSERT.
     // Every time a new field is created in the "chat" table, it must be added to this array.
     // Otherwise, you will get the message:
