@@ -3,7 +3,7 @@
 namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -11,7 +11,7 @@ class Handler extends ExceptionHandler
     /**
      * A list of exception types with their corresponding custom log levels.
      *
-     * @var array<class-string<\Throwable>, \Psr\Log\LogLevel::*>
+     * @var array<class-string<Throwable>, \Psr\Log\LogLevel::*>
      */
     protected $levels = [
         //
@@ -20,14 +20,14 @@ class Handler extends ExceptionHandler
     /**
      * A list of the exception types that are not reported.
      *
-     * @var array<int, class-string<\Throwable>>
+     * @var array<int, class-string<Throwable>>
      */
     protected $dontReport = [
         //
     ];
 
     /**
-     * A list of the inputs that are never flashed to the session on validation exceptions.
+     * A list of the inputs that are never flashed when validating.
      *
      * @var array<int, string>
      */
@@ -44,10 +44,67 @@ class Handler extends ExceptionHandler
      */
     public function register()
     {
-        //  el método "renderable" se utiliza para personalizar el manejo de la excepción NotFoundHttpException.
-        $this->renderable(function (NotFoundHttpException $e, $request) {
-            // Se verifica si la solicitud coincide con ciertas rutas relacionadas.
-            // Si la solicitud coincide con alguna de estas rutas, entonces se envía una respuesta JSON con un código
+        $this->reportable(function (Throwable $e) {
+            // Log exceptions with proper context
+            Log::error('Unhandled Exception', [
+                'exception' => get_class($e),
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'user_id' => auth()?->id(),
+            ]);
+        });
+
+        $this->renderable(function (Throwable $e, $request) {
+            if ($request->is('api/*')) {
+                return $this->handleApiException($e, $request);
+            }
+        });
+    }
+
+    /**
+     * Handle API exceptions with consistent response format
+     */
+    private function handleApiException(Throwable $e, $request)
+    {
+        if ($e instanceof \Illuminate\Validation\ValidationException) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors(),
+            ], 422);
+        }
+
+        if ($e instanceof \Illuminate\Auth\AuthenticationException) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated',
+            ], 401);
+        }
+
+        if ($e instanceof \Illuminate\Auth\Access\AuthorizationException) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized',
+            ], 403);
+        }
+
+        if ($e instanceof \Symfony\Component\HttpKernel\Exception\NotFoundHttpException) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Resource not found',
+            ], 404);
+        }
+
+        // Default error response
+        return response()->json([
+            'success' => false,
+            'message' => 'An error occurred',
+            'error' => config('app.debug') ? $e->getMessage() : null,
+        ], 500);
+    }
+}
+
             // de estado HTTP 404 (Not Found) y un mensaje de error específico
 
             // Excepción para los departamentos no encontrados.
