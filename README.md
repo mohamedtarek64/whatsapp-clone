@@ -55,83 +55,252 @@ A robust, full-featured WhatsApp clone built with **Laravel**, **Livewire**, and
 
 ## 🛠️ Technology Stack
 
-*   **Backend:** [Laravel 10.x](https://laravel.com)
-*   **Frontend Framework:** [Livewire](https://livewire.laravel.com)
-*   **Interactivity:** [Alpine.js](https://alpinejs.dev)
-*   **Styling:** [Tailwind CSS](https://tailwindcss.com) (WhatsApp Web Replica)
-*   **Real-Time:** [Pusher](https://pusher.com) / Laravel Echo
-*   **Database:** MySQL
+*   **Backend:** [Laravel 9.x](https://laravel.com)
+*   **Frontend Framework:** [Livewire 2.x](https://livewire.laravel.com)
+*   **Interactivity:** [Alpine.js 3.x](https://alpinejs.dev)
+*   **Styling:** [Tailwind CSS 3.x](https://tailwindcss.com)
+*   **Real-Time:** [Pusher](https://pusher.com) / [Laravel Echo](https://laravel.com/docs/echo)
+*   **Database:** MySQL 5.7+
+*   **Authentication:** [Sanctum](https://laravel.com/docs/sanctum)
+*   **Authorization:** [Gates & Policies](https://laravel.com/docs/authorization)
 
 ---
 
-## 🚀 Installation & Setup
+## 📋 Documentation
 
-Follow these steps to set up the project locally:
+- **[Installation & Setup Guide](./INSTALLATION.md)** - Complete setup instructions
+- **[Architecture & Code Structure](./ARCHITECTURE.md)** - Design patterns and models
+- **[Contributing Guidelines](./CONTRIBUTING.md)** - How to contribute
+- **[API Documentation](#-api-endpoints)** - API endpoint reference
 
-### 1. Prerequisities
-Ensure you have the following installed:
-*   PHP 8.1+
-*   Composer
-*   Node.js & NPM
-*   MySQL
+---
 
-### 2. Clone the Repository
+## 🚀 Quick Start
+
+### Prerequisites
+- PHP 8.0.2+
+- MySQL 5.7+
+- Node.js 14+
+- Composer
+
+### Installation
 ```bash
+# 1. Clone repository
 git clone https://github.com/mohamedtarek64/whatsapp-clone.git
 cd whatsapp-clone
-```
 
-### 3. Install Dependencies
-```bash
+# 2. Install dependencies
 composer install
 npm install
-```
 
-### 4. Environment Configuration
-Copy the `.env.example` file to `.env`:
-```bash
+# 3. Setup environment
 cp .env.example .env
-```
-Open `.env` and configure your database and Pusher credentials:
-```ini
-DB_DATABASE=whatsapp_clone
-DB_USERNAME=root
-DB_PASSWORD=
-
-BROADCAST_DRIVER=pusher
-PUSHER_APP_ID=your_app_id
-PUSHER_APP_KEY=your_app_key
-PUSHER_APP_SECRET=your_app_secret
-PUSHER_APP_CLUSTER=mt1
-```
-
-### 5. Generate Key & Migrate
-```bash
 php artisan key:generate
+
+# 4. Configure database in .env
+# DB_DATABASE=whatsapp_clone
+# DB_USERNAME=root
+
+# 5. Run migrations
 php artisan migrate
+
+# 6. Link storage
 php artisan storage:link
-```
-*Note: The `storage:link` command is crucial for displaying profile photos and media.*
 
-### 6. Build Assets
-```bash
+# 7. Build assets
 npm run build
-```
 
-### 7. Run the Application
-```bash
+# 8. Start server
 php artisan serve
 ```
+
 Visit `http://localhost:8000` in your browser.
 
 ---
 
-## 📂 Project Structure (Key Files)
+## 🔌 API Endpoints
 
-*   `app/Http/Livewire/ChatComponent.php`: The brain of the application. Handles all chat logic, realtime events, and state management.
-*   `resources/views/livewire/chat-component.blade.php`: The main UI template containing the sidebar, chat area, and settings.
-*   `app/Models/*`: Eloquent models for `Message`, `Chat`, `User`, `Story`, `Reaction`, etc.
-*   `routes/channels.php`: Private presence channels for real-time online status.
+### Authentication
+```
+POST   /api/auth/register          # Register new user
+POST   /api/auth/login             # Login user
+POST   /api/auth/logout            # Logout user
+```
+
+### Contacts
+```
+GET    /api/contacts               # List all contacts
+POST   /api/contacts               # Add new contact
+GET    /api/contacts/{id}          # Get contact details
+PUT    /api/contacts/{id}          # Update contact
+DELETE /api/contacts/{id}          # Delete contact
+```
+
+### Chats
+```
+GET    /api/chats                  # List all chats
+```
+
+### Messages
+```
+GET    /api/chats/{chat}/messages           # Get messages
+POST   /api/chats/{chat}/messages           # Send message
+PATCH  /api/chats/{chat}/messages/read      # Mark as read
+GET    /api/chats/{chat}/messages/unread    # Get unread
+```
+
+See [INSTALLATION.md](./INSTALLATION.md) for detailed API documentation with request/response examples.
+
+---
+
+## 🏗️ Project Structure
+
+```
+whatsapp-clone/
+├── app/
+│   ├── Http/
+│   │   ├── Controllers/          # API & Web controllers
+│   │   ├── Requests/             # Form request validation
+│   │   ├── Resources/            # API response transformers
+│   │   ├── Middleware/           # HTTP middleware
+│   │   └── Livewire/             # Livewire components
+│   ├── Models/                   # Eloquent models
+│   ├── Services/                 # Business logic
+│   ├── Policies/                 # Authorization policies
+│   ├── Traits/                   # Reusable traits
+│   └── Notifications/            # Notification classes
+├── database/
+│   ├── migrations/               # Database migrations
+│   ├── factories/                # Model factories
+│   └── seeders/                  # Database seeds
+├── routes/
+│   ├── api.php                   # API routes
+│   ├── web.php                   # Web routes
+│   └── channels.php              # Broadcasting channels
+├── resources/
+│   ├── views/                    # Blade templates
+│   ├── js/                       # JavaScript files
+│   └── css/                      # Stylesheets
+├── tests/
+│   ├── Feature/                  # Feature tests
+│   └── Unit/                     # Unit tests
+├── INSTALLATION.md               # Setup guide
+├── ARCHITECTURE.md               # Design documentation
+├── CONTRIBUTING.md               # Contribution guidelines
+└── README.md                     # This file
+```
+
+---
+
+## 💡 Key Features
+
+### Database Optimization
+- Query scopes for reusable filters
+- Eager loading to prevent N+1 queries
+- Pagination for large datasets
+- Proper indexing on frequently queried columns
+
+### API Design
+- Consistent JSON response format
+- RESTful endpoint design
+- Proper HTTP status codes
+- Comprehensive error handling
+
+### Security
+- User authentication with Sanctum tokens
+- Authorization policies for model access
+- Input validation with FormRequest classes
+- Password hashing with bcrypt
+
+### Testing
+- Unit tests for services
+- Feature tests for API endpoints
+- Database seeding for test data
+- Coverage tracking
+
+---
+
+## 🔒 Security Features
+
+- **Authentication:** API token-based with Sanctum
+- **Authorization:** Model policies and gates
+- **Validation:** FormRequest classes with custom rules
+- **CSRF Protection:** For web routes
+- **Password Security:** Bcrypt hashing
+- **Rate Limiting:** Configurable per endpoint
+
+---
+
+## 📊 Database Design
+
+### Core Tables
+- `users` - User accounts
+- `chats` - Conversations (1-to-1 or groups)
+- `messages` - Chat messages
+- `contacts` - User contact lists
+- `chat_user` - Chat participants (pivot)
+- `message_reactions` - Message emoji reactions
+- `deleted_messages` - Message deletion tracking
+- `starred_messages` - Important message markers
+- `stories` - User status updates
+- `story_views` - Story view tracking
+
+---
+
+## 🧪 Testing
+
+Run tests with:
+```bash
+# All tests
+php artisan test
+
+# Specific test class
+php artisan test tests/Feature/Api/MessageApiTest.php
+
+# With coverage
+php artisan test --coverage
+```
+
+---
+
+## 🚀 Performance Tips
+
+1. **Enable Query Caching**
+   ```php
+   // Use Redis for cache and sessions
+   CACHE_DRIVER=redis
+   SESSION_DRIVER=redis
+   ```
+
+2. **Optimize Queries**
+   - Use eager loading with `with()`
+   - Use scopes for reusable filters
+   - Implement pagination
+
+3. **Asset Optimization**
+   - Minify CSS/JS: `npm run build`
+   - Enable gzip compression
+   - Use CDN for static files
+
+---
+
+## 📱 Real-Time Features
+
+Uses **Pusher** or **Laravel WebSockets** for:
+- Instant messaging
+- Typing indicators
+- Read receipts
+- Online/offline status
+- Notification delivery
+
+Configure in `.env`:
+```env
+BROADCAST_DRIVER=pusher
+PUSHER_APP_ID=your_id
+PUSHER_APP_KEY=your_key
+PUSHER_APP_SECRET=your_secret
+PUSHER_APP_CLUSTER=mt1
+```
 
 ---
 
@@ -141,7 +310,29 @@ This project is open-source and licensed under the [MIT License](LICENSE).
 
 ---
 
+## 🤝 Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines on:
+- Code style
+- Git workflow
+- Testing requirements
+- Documentation updates
+
+---
+
+## 📧 Support
+
+- **Email:** mohamedelkenany001@gmail.com
+- **Issues:** GitHub Issues
+- **Discussions:** GitHub Discussions
+
+---
+
 <div align="center">
   <p>Developed with ❤️ by <strong>MOHAMED ELKENANY</strong></p>
-  <p>📧 Email: <a href="mailto:mohamedelkenany001@gmail.com">mohamedelkenany001@gmail.com</a></p>
+  <p>
+    <a href="https://github.com/mohamedtarek64">GitHub</a> •
+    <a href="mailto:mohamedelkenany001@gmail.com">Email</a>
+  </p>
 </div>
+
