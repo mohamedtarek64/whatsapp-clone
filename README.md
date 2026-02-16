@@ -118,6 +118,13 @@ Visit `http://localhost:8000` in your browser.
 
 ---
 
+## Continuous Integration
+
+This repository includes a GitHub Actions workflow that runs the test suite on push and pull requests. The workflow is defined in `.github/workflows/phpunit.yml` and runs `composer install`, migrations and `phpunit` using an in-memory SQLite database.
+
+Ensure your tests can run with an in-memory SQLite DB or update the workflow accordingly.
+
+
 ## 🔌 API Endpoints
 
 ### Authentication
