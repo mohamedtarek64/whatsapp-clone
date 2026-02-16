@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreContactRequest extends FormRequest
 {
@@ -25,7 +26,12 @@ class StoreContactRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255',
-            'contact_id' => 'required|integer|exists:users,id|different:id',
+            'contact_id' => [
+                'required',
+                'integer',
+                'exists:users,id',
+                Rule::notIn([$this->user()?->id ?? null]),
+            ],
         ];
     }
 
