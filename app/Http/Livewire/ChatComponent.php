@@ -174,6 +174,7 @@ class ChatComponent extends Component
             If the query returns no records, an empty Array is returned to avoid errors with the frontend "@forelse" directive
         */
         return Contact::where('user_id', auth()->id())
+                ->with('contactUser')
                 ->when($this->search, function($query){
                     $query->where(function($query){
                         $query->where('name', 'like', '%'.$this->search.'%')
@@ -191,6 +192,7 @@ class ChatComponent extends Component
     public function getChatsProperty()
     {
         return auth()->user()->chats()
+            ->withRelations()
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('name', 'like', '%' . $this->search . '%')
@@ -203,7 +205,7 @@ class ChatComponent extends Component
                       });
                 });
             })
-            ->where('chat_user.is_archived', $this->showArchived)
+                ->where('chat_user.is_archived', $this->showArchived)
             ->orderByDesc('chat_user.is_pinned')
             ->orderByDesc('last_message_at')
             ->get();
@@ -217,6 +219,8 @@ class ChatComponent extends Component
         }
 
         return $this->chat->messages()
+            ->visibleToUser()
+            ->withRelations()
             ->whereDoesntHave('deletedByUsers', function ($query) {
                 $query->where('users.id', auth()->id());
             })
@@ -324,6 +328,8 @@ class ChatComponent extends Component
 
         $chatService = app(\App\Services\ChatService::class);
         $this->chat = $chatService->getOrCreateDirectChat(auth()->id(), $contact->contact_id);
+        // Eager load users and message relations to prevent N+1 in the component
+        $this->chat->load(['users', 'messages.user', 'messages.reactions.user']);
         
         $this->chat_id = $this->chat->id;
         $this->page = 1;
@@ -335,6 +341,8 @@ class ChatComponent extends Component
     {
         $chat = Chat::findOrFail($chatId);
         $this->chat = $chat;
+        // Eager load users and message relations to avoid repeated queries
+        $this->chat->load(['users', 'messages.user', 'messages.reactions.user']);
         $this->showChatDetails = false;
         // The ID of the open chat is stored in the "chat_id" property for use in the view
         // using the "@entangle('chat_id')" directive
@@ -453,19 +461,23 @@ class ChatComponent extends Component
     public function togglePin($chatId)
     {
         $chat = Chat::findOrFail($chatId);
-        $pivot = $chat->users()->where('users.id', auth()->id())->first()->pivot;
+        $chat->loadMissing('users');
+        $me = $chat->users->firstWhere('id', auth()->id());
+        if (!$me) return;
         $chat->users()->updateExistingPivot(auth()->id(), [
-            'is_pinned' => !$pivot->is_pinned
+            'is_pinned' => !$me->pivot->is_pinned
         ]);
     }
 
     public function toggleMute($chatId)
     {
         $chat = Chat::findOrFail($chatId);
-        $pivot = $chat->users()->where('users.id', auth()->id())->first()->pivot;
-        
-        $mutedUntil = $pivot->muted_until ? null : now()->addYears(100); // Mute indefinitely for now
-        
+        $chat->loadMissing('users');
+        $me = $chat->users->firstWhere('id', auth()->id());
+        if (!$me) return;
+
+        $mutedUntil = $me->pivot->muted_until ? null : now()->addYears(100);
+
         $chat->users()->updateExistingPivot(auth()->id(), [
             'muted_until' => $mutedUntil
         ]);
@@ -517,7 +529,8 @@ class ChatComponent extends Component
         if (!$this->chat || !$this->chat->is_group) return;
         
         // Autenfication of the user who is adding the member
-        $me = $this->chat->users()->where('users.id', auth()->id())->first();
+        $this->chat->loadMissing('users');
+        $me = $this->chat->users->firstWhere('id', auth()->id());
         if (!$me || !$me->pivot->is_admin) return;
 
         $this->chat->users()->syncWithoutDetaching([$userId]);
@@ -528,8 +541,8 @@ class ChatComponent extends Component
     public function removeMember($userId)
     {
         if (!$this->chat || !$this->chat->is_group) return;
-        
-        $me = $this->chat->users()->where('users.id', auth()->id())->first();
+        $this->chat->loadMissing('users');
+        $me = $this->chat->users->firstWhere('id', auth()->id());
         if (!$me || !$me->pivot->is_admin) return;
 
         $this->chat->users()->detach($userId);
@@ -538,11 +551,11 @@ class ChatComponent extends Component
     public function toggleAdmin($userId)
     {
         if (!$this->chat || !$this->chat->is_group) return;
-        
-        $me = $this->chat->users()->where('users.id', auth()->id())->first();
+        $this->chat->loadMissing('users');
+        $me = $this->chat->users->firstWhere('id', auth()->id());
         if (!$me || !$me->pivot->is_admin) return;
 
-        $user = $this->chat->users()->where('users.id', $userId)->first();
+        $user = $this->chat->users->firstWhere('id', $userId);
         if (!$user) return;
 
         $this->chat->users()->updateExistingPivot($userId, [
