@@ -94,7 +94,8 @@ class Chat extends Model
     {
         return Attribute::make(
             get: function(){
-                return $this->messages->last() ? $this->messages->last()->created_at : $this->created_at;
+                // Prefer stored `last_message_at` column to avoid loading the whole messages collection
+                return $this->last_message_at ?? $this->created_at;
             }
         );
     }
