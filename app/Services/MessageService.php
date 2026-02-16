@@ -8,6 +8,7 @@ use App\Notifications\NewMessage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 class MessageService
 {
@@ -59,6 +60,11 @@ class MessageService
     {
         $usersToNotify = $chat->users()->where('users.id', '!=', Auth::id())->get();
         if ($usersToNotify->isNotEmpty()) {
+            // Invalidate per-user unread cache
+            foreach ($usersToNotify as $u) {
+                Cache::forget("chat:{$chat->id}:user:{$u->id}:unread");
+            }
+
             Notification::send($usersToNotify, new NewMessage($chat, $message));
         }
     }
