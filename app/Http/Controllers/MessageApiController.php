@@ -8,6 +8,7 @@ use App\Models\Chat;
 use App\Services\MessageService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class MessageApiController extends Controller
 {
@@ -95,11 +96,16 @@ class MessageApiController extends Controller
     {
         $this->authorize('view', $chat);
 
-        $unreadMessages = $chat->messages()
-            ->unread()
-            ->withRelations()
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $userId = auth()->id();
+        $cacheKey = "chat:{$chat->id}:user:{$userId}:unread";
+
+        $unreadMessages = Cache::remember($cacheKey, 3, function () use ($chat) {
+            return $chat->messages()
+                ->unread()
+                ->withRelations()
+                ->orderBy('created_at', 'desc')
+                ->get();
+        });
 
         return $this->success(
             MessageResource::collection($unreadMessages),
