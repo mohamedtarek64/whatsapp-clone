@@ -7,6 +7,7 @@ use App\Models\Message;
 use App\Notifications\NewMessage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\DB;
 
 class MessageService
 {
@@ -19,13 +20,19 @@ class MessageService
         $filePath = null;
 
         if ($media) {
-            $extension = $media->getClientOriginalExtension();
-            if (in_array(strtolower($extension), ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
-                $type = 'image';
-            } else {
-                $type = 'file';
+            try {
+                $extension = $media->getClientOriginalExtension();
+                if (in_array(strtolower($extension), ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
+                    $type = 'image';
+                } else {
+                    $type = 'file';
+                }
+                $filePath = $media->store('media', 'public');
+            } catch (\Exception $e) {
+                report($e);
+                $filePath = null;
+                $type = 'text';
             }
-            $filePath = $media->store('media', 'public');
         }
 
         $message = $chat->messages()->create([
@@ -51,7 +58,9 @@ class MessageService
     protected function broadcastNewMessage(Chat $chat, Message $message)
     {
         $usersToNotify = $chat->users()->where('users.id', '!=', Auth::id())->get();
-        Notification::send($usersToNotify, new NewMessage($chat, $message));
+        if ($usersToNotify->isNotEmpty()) {
+            Notification::send($usersToNotify, new NewMessage($chat, $message));
+        }
     }
 
     /**
@@ -89,14 +98,24 @@ class MessageService
      */
     public function clearChat(Chat $chat)
     {
-        $messageIds = $chat->messages()->pluck('id');
         $userId = Auth::id();
 
-        foreach ($messageIds as $messageId) {
-            \App\Models\DeletedMessage::firstOrCreate([
-                'user_id' => $userId,
-                'message_id' => $messageId,
-            ]);
-        }
+        // Process messages in chunks and insert ignoring duplicates to avoid high memory usage
+        $chat->messages()->select('id')->chunk(500, function ($messages) use ($userId) {
+            $rows = [];
+            $now = now();
+            foreach ($messages as $m) {
+                $rows[] = [
+                    'user_id' => $userId,
+                    'message_id' => $m->id,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+
+            if (!empty($rows)) {
+                DB::table('deleted_messages')->insertOrIgnore($rows);
+            }
+        });
     }
 }
