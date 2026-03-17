@@ -104,16 +104,3 @@ class Handler extends ExceptionHandler
         ], 500);
     }
 }
-
-            // de estado HTTP 404 (Not Found) y un mensaje de error específico
-
-            // Excepción para los departamentos no encontrados.
-            if($request->is('api/contacts/*')){
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Contacto invalido'
-                ], 404);
-            }
-        });
-    }
-}
