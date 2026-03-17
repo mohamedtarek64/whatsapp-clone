@@ -37,7 +37,7 @@ class MessageService
         }
 
         $message = $chat->messages()->create([
-            'body' => $body,
+            'body' => $body ?? '',
             'user_id' => Auth::id(),
             'type' => $type,
             'file_path' => $filePath,
