@@ -519,7 +519,7 @@
                         <i class="fa-solid fa-magnifying-glass text-[#00a884] text-sm"></i>
                         <input type="text" wire:model.debounce.300ms="chatSearch" placeholder="Search for messages..." class="bg-transparent border-none outline-none text-sm w-full font-bold text-[#111b21] placeholder-gray-400">
                         @if($chatSearch)
-                            <div class="w-5 h-5 bg-gray-100 rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-200" wire:click="$set('chatSearch', '')">
+                            <div class="w-5 h-5 bg-gray-100 rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-200" @click="$wire.set('chatSearch', '')">
                                 <i class="fa-solid fa-xmark text-gray-500 text-[10px]"></i>
                             </div>
                         @endif
