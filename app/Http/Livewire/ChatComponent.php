@@ -178,7 +178,7 @@ class ChatComponent extends Component
                 ->when($this->search, function($query){
                     $query->where(function($query){
                         $query->where('name', 'like', '%'.$this->search.'%')
-                            ->orWhereHas('user', function($query){
+                            ->orWhereHas('contactUser', function($query){
                                 $query->where('email', 'like', '%'.$this->search.'%');
                             });
                     });
