@@ -17,7 +17,7 @@ class Contact extends Model
         'name', 'user_id', 'contact_id'
     ];
 
-    public function user()
+    public function contactUser()
     {
         // belongsTo() => Method that makes the "Many to One" relationship
         //  -> 1st Parameter => Model you want to relate with
