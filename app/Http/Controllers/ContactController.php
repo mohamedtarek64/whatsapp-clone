@@ -116,7 +116,7 @@ class ContactController extends Controller
                 'email',          // Must have email format
                 'exists:users,email',   // Must exist in the users table of the database
                 Rule::notIn([auth()->user()->email]), // Email cannot be the same as the authenticated user's email
-                new InvalidEmail($contact->user->email)  // Custom Rule in the file: "app\Rules\InvalidEmail.php". This rule validates that the entered email does not already belong to a Contact
+                new InvalidEmail($contact->contactUser->email)  // Custom Rule in the file: "app\Rules\InvalidEmail.php". This rule validates that the entered email does not already belong to a Contact
             ]
         ], [
             'email.exists' => 'This email is not registered in our system.',
