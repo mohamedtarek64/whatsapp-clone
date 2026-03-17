@@ -141,10 +141,10 @@
                                 @foreach ($this->contacts as $contact)
                                     <div wire:click="toggleContactSelection({{ $contact->id }})" class="flex items-center p-4 hover:bg-[#f5f6f6] cursor-pointer transition-all">
                                         <div class="checkbox-container mr-5 {{ in_array($contact->id, $selectedContacts) ? 'checked' : '' }}"><i class="fa-solid fa-check"></i></div>
-                                        <img src="{{ $contact->user->profile_photo_url }}" class="w-12 h-12 rounded-full border border-gray-100 shadow-sm">
+                                        <img src="{{ $contact->contactUser->profile_photo_url }}" class="w-12 h-12 rounded-full border border-gray-100 shadow-sm">
                                         <div class="ml-4 flex-1">
                                             <div style="font-weight: 700; color: #111b21;">{{ $contact->name }}</div>
-                                            <div style="font-size: 13px; color: #667781;">{{ $contact->user->email }}</div>
+                                            <div style="font-size: 13px; color: #667781;">{{ $contact->contactUser->email }}</div>
                                         </div>
                                     </div>
                                 @endforeach
