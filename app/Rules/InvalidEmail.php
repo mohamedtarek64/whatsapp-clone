@@ -59,7 +59,7 @@ class InvalidEmail implements Rule
                         )
         */
         return Contact::where('user_id', auth()->id()) // In the "Contacts" table it filters by the "user_id" field
-                        ->whereHas('user', function($query) use ($value){ // In a subquery it references the "user" table
+                        ->whereHas('contactUser', function($query) use ($value){ // In a subquery it references the "user" table
                             $query->where('email', $value) // It filters by the "email" field of the "user" table
                                 ->when($this->email, function($query){ // The condition is added that the query only executes when the "$this->email" parameter is different from NULL
                                     $query->where('email', '!=', $this->email); // It filters by the "email" field in the "user" table and tells it to get the records different from the "$this->email" parameter
